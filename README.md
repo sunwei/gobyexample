@@ -1,11 +1,11 @@
-# Go by Example
+# 深入理解Hugo
 
-Content and build toolchain for [Go by Example](https://gobyexample.com),
+Content and build toolchain for [深入理解Hugo](https://gobyexample.com),
 a site that teaches Go via annotated example programs.
 
 ### Overview
 
-The Go by Example site is built by extracting code and
+The 深入理解Hugo site is built by extracting code and
 comments from source files in `examples` and rendering
 them via the `templates` into a static `public`
 directory. The programs implementing this build process
@@ -61,7 +61,7 @@ The Go Gopher is copyright [Renée French](https://reneefrench.blogspot.com/) an
 
 ### Translations
 
-Contributor translations of the Go by Example site are available in:
+Contributor translations of the 深入理解Hugo site are available in:
 
 * [Chinese](https://gobyexample-cn.github.io/) by [gobyexample-cn](https://github.com/gobyexample-cn)
 * [Czech](http://gobyexamples.sweb.cz/) by [martinkunc](https://github.com/martinkunc/gobyexample-cz)
