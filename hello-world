@@ -9,10 +9,6 @@
       onkeydown = (e) => {
           
           
-          if (e.key == "ArrowRight") {
-              window.location.href = 'values';
-          }
-          
       }
   </script>
   <body>
@@ -119,10 +115,6 @@ learn more about the language.</p>
         
       </table>
       
-      
-      <p class="next">
-        Next example: <a href="values">Values</a>.
-      </p>
       
 
     <p class="footer">
