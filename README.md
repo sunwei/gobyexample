@@ -18,7 +18,7 @@ CloudFront, for example.
 
 ### Building
 
-[![test](https://github.com/mmcgrana/gobyexample/actions/workflows/test.yml/badge.svg)](https://github.com/mmcgrana/gobyexample/actions/workflows/test.yml)
+[![test](https://github.com/sunwei/gobyexample/actions/workflows/test.yml/badge.svg)](https://github.com/sunwei/gobyexample/actions/workflows/test.yml)
 
 To build the site you'll need Go installed. Run:
 
@@ -84,7 +84,7 @@ inspired this project.
 #### I found a problem with the examples; what do I do?
 
 We're very happy to fix problem reports and accept contributions! Please submit
-[an issue](https://github.com/mmcgrana/gobyexample/issues) or send a Pull Request.
+[an issue](https://github.com/sunwei/gobyexample/issues) or send a Pull Request.
 See `CONTRIBUTING.md` for more details.
 
 #### What version of Go is required to run these examples?

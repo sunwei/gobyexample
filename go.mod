@@ -1,4 +1,4 @@
-module github.com/mmcgrana/gobyexample
+module github.com/sunwei/gobyexample
 
 go 1.18
 
