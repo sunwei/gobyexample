@@ -1,3 +1,3 @@
 #!/bin/bash
 
-exec go run tools/measure.go
+exec go run tools/mea/measure.go

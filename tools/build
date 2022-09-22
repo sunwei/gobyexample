@@ -17,6 +17,7 @@ tools/measure
 
 # SITE_DIR is the final location where we want generated content to be
 SITE_DIR="public"
+rm -rf "$SITE_DIR"
 
 # GENERATE_DIR is where the content will be generated initially
 GENERATE_DIR="$(mktemp -d)"
