@@ -1,117 +1,58 @@
 # 深入理解Hugo
 
-Content and build toolchain for [深入理解Hugo](https://gobyexample.com),
-a site that teaches Go via annotated example programs.
+代码实例来帮助 [深入理解Hugo](https://hugo.sunwei.xyz),
 
 ### Overview
 
-The 深入理解Hugo site is built by extracting code and
-comments from source files in `examples` and rendering
-them via the `templates` into a static `public`
-directory. The programs implementing this build process
-are in `tools`, along with dependencies specified in
-the `go.mod`file.
+深入理解Hugo 站点并不是由`hugo`生成的。
 
-The built `public` directory can be served by any
-static content system. The production site uses S3 and
-CloudFront, for example.
+站点生成的主要思想是一样的：
+`templates` + `content - examples` => `site - public`
+既通过模板，将内容转化为静态站点。
+
+虽然`hugo`提供了强大的模板功能，但主要支持的[内容格式](https://gohugo.io/content-management/formats/)是markdown。
+并不是我们`examples`中的`*.go`文件。
+
+再加上解析方式的不同。
+在我们的示例中，需要逐行解析，分别用`blackfriday`解析注解，和`chroma`来解析go代码。
+这不同于Hugo现在用`goldmark`来解析md文件，并将文件内容作为整体来进行处理，虽然提供了一些字符处理功能函数。
+`readDir`可以帮我们获取样例下的所有文件，`readFile`可以帮助我们读取文本内容，`replaceRE`可以帮助我们用正则来处理内容。
+但没法生成高亮的go代码块。
+
+如果想创建一个Hugo Theme来提供这些功能，做起来就会比较别扭。
+最好的方式是拓展Hugo功能，让它支持编程语言的内容格式。
+但这会和Hugo现在的内容体系显得格格不入，有些别扭。
+说不定可以重新开启一个Hugo的分支，专门用来支持开发人员源码讲解的站点需求。
+让我们在这里加一个**TODO**，放到深入理解Hugo的实际样例章节 - 开发人员友好的Hugo。
 
 ### Building
 
 [![test](https://github.com/sunwei/gobyexample/actions/workflows/test.yml/badge.svg)](https://github.com/sunwei/gobyexample/actions/workflows/test.yml)
 
-To build the site you'll need Go installed. Run:
+安装Go，运行:
 
 ```console
 $ tools/build
 ```
 
-To build continuously in a loop:
+支持所见既所得，持续构建:
 
 ```console
 $ tools/build-loop
 ```
 
-To see the site locally:
+启动本地服务:
 
 ```
 $ tools/serve
 ```
 
-and open `http://127.0.0.1:8000/` in your browser.
+可检查站点： `http://127.0.0.1:8000/` 
 
 ### Publishing
 
-To upload the site:
+持续发布:
 
 ```console
-$ export AWS_ACCESS_KEY_ID=...
-$ export AWS_SECRET_ACCESS_KEY=...
-$ tools/upload
+$ git push
 ```
-
-### License
-
-This work is copyright Mark McGranaghan and licensed under a
-[Creative Commons Attribution 3.0 Unported License](http://creativecommons.org/licenses/by/3.0/).
-
-The Go Gopher is copyright [Renée French](https://reneefrench.blogspot.com/) and licensed under a
-[Creative Commons Attribution 3.0 Unported License](http://creativecommons.org/licenses/by/3.0/).
-
-
-### Translations
-
-Contributor translations of the 深入理解Hugo site are available in:
-
-* [Chinese](https://gobyexample-cn.github.io/) by [gobyexample-cn](https://github.com/gobyexample-cn)
-* [Czech](http://gobyexamples.sweb.cz/) by [martinkunc](https://github.com/martinkunc/gobyexample-cz)
-* [French](http://le-go-par-l-exemple.keiruaprod.fr) by [keirua](https://github.com/keirua/gobyexample)
-* [Italian](https://gobyexample.it) by the [Go Italian community](https://github.com/golangit/gobyexample-it)
-* [Japanese](http://spinute.org/go-by-example) by [spinute](https://github.com/spinute)
-* [Korean](https://mingrammer.com/gobyexample/) by [mingrammer](https://github.com/mingrammer)
-* [Russian](https://gobyexample.com.ru/) by [badkaktus](https://github.com/badkaktus)
-* [Spanish](http://goconejemplos.com) by the [Go Mexico community](https://github.com/dabit/gobyexample)
-* [Ukrainian](https://butuzov.github.io/gobyexample/) by [butuzov](https://github.com/butuzov/gobyexample)
-
-### Thanks
-
-Thanks to [Jeremy Ashkenas](https://github.com/jashkenas)
-for [Docco](http://jashkenas.github.io/docco/), which
-inspired this project.
-
-### FAQ
-
-#### I found a problem with the examples; what do I do?
-
-We're very happy to fix problem reports and accept contributions! Please submit
-[an issue](https://github.com/sunwei/gobyexample/issues) or send a Pull Request.
-See `CONTRIBUTING.md` for more details.
-
-#### What version of Go is required to run these examples?
-
-Given Go's strong [backwards compatibility guarantees](https://go.dev/doc/go1compat),
-we expect the vast majority of examples to work on the latest released version of Go
-as well as many older releases going back years.
-
-That said, some examples show off new features added in the latest release; therefore,
-it's recommended to try running examples with the latest officially released Go version
-(see Go's [release history](https://go.dev/doc/devel/release) for details).
-
-#### I'm getting output in a different order from the example. Is the example wrong?
-
-Some of the examples demonstrate concurrent code which has a non-deterministic
-execution order. It depends on how the Go runtime schedules its goroutines and
-may vary by operating system, CPU architecture, or even Go version.
-
-Similarly, examples that iterate over maps may produce items in a different order
-from what you're getting on your machine. This is because the order of iteration
-over maps in Go is [not specified and is not guaranteed to be the same from one
-iteration to the next](https://go.dev/ref/spec#RangeClause).
-
-It doesn't mean anything is wrong with the example. Typically the code in these
-examples will be insensitive to the actual order of the output; if the code is
-sensitive to the order - that's probably a bug - so feel free to report it.
-
-
-
-
