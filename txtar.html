@@ -26,7 +26,7 @@
             
           </td>
           <td class="code leading">
-            <a href="https://go.dev/play/p/UBxifK9AAlD"><img title="Run code" src="play.png" class="run" /></a><img title="Copy code" src="clipboard.png" class="copy" />
+            <a href="https://go.dev/play/p/3o2wQzLz_6i"><img title="Run code" src="play.png" class="run" /></a><img title="Copy code" src="clipboard.png" class="copy" />
           <pre class="chroma"><span class="kn">package</span> <span class="nx">main</span>
 </pre>
           </td>
@@ -100,28 +100,15 @@
         
         <tr>
           <td class="docs">
-            <p>遍历解析生成的所有文件，通过File结构体获取文件名和文件数据</p>
+            <p>遍历解析生成的所有文件，通过File结构体获取文件名和文件数据
+f.Name 获取文件名
+f.Data 获取文件数据</p>
 
           </td>
           <td class="code leading">
             
           <pre class="chroma">
-    <span class="c1">//type File struct {
-</span></pre>
-          </td>
-        </tr>
-        
-        <tr>
-          <td class="docs">
-            <p>Name string // name of file (&ldquo;foo/bar.txt&rdquo;)
-   Data []byte // text content of file</p>
-
-          </td>
-          <td class="code leading">
-            
-          <pre class="chroma">
-    <span class="c1">//}
-</span><span class="c1"></span>    <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">f</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">data</span><span class="p">.</span><span class="nx">Files</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">f</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">data</span><span class="p">.</span><span class="nx">Files</span> <span class="p">{</span>
         <span class="nx">filename</span> <span class="o">:=</span> <span class="nx">filepath</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="s">&#34;workingDir&#34;</span><span class="p">,</span> <span class="nx">f</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span>
         <span class="nx">data</span> <span class="o">:=</span> <span class="nx">bytes</span><span class="p">.</span><span class="nf">TrimSuffix</span><span class="p">(</span><span class="nx">f</span><span class="p">.</span><span class="nx">Data</span><span class="p">,</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="s">&#34;\n&#34;</span><span class="p">))</span>
 </pre>
@@ -188,7 +175,7 @@ workingDir就是我们的工作目录，通常是要写入的文件目录</p>
     </div>
     <script>
       var codeLines = [];
-      codeLines.push('package main\u000A');codeLines.push('import (\u000A    \"bytes\"\u000A    \"fmt\"\u000A    \"path/filepath\"\u000A');codeLines.push('    \"golang.org/x/tools/txtar\"\u000A)\u000A');codeLines.push('var files \u003D \"-- config.toml --\\n\" +\u000A    \"theme \u003D \'mytheme\'\"\u000A');codeLines.push('func main() {\u000A');codeLines.push('    data :\u003D txtar.Parse([]byte(files))\u000A    fmt.Println(\"File start:\")\u000A');codeLines.push('    //type File struct {\u000A');codeLines.push('    //}\u000A    for _, f :\u003D range data.Files {\u000A        filename :\u003D filepath.Join(\"workingDir\", f.Name)\u000A        data :\u003D bytes.TrimSuffix(f.Data, []byte(\"\\n\"))\u000A');codeLines.push('        fmt.Println(filename)\u000A        fmt.Println(string(data))\u000A    }\u000A    fmt.Println(\"File end.\")\u000A}\u000A');codeLines.push('');codeLines.push('');
+      codeLines.push('package main\u000A');codeLines.push('import (\u000A    \"bytes\"\u000A    \"fmt\"\u000A    \"path/filepath\"\u000A');codeLines.push('    \"golang.org/x/tools/txtar\"\u000A)\u000A');codeLines.push('var files \u003D \"-- config.toml --\\n\" +\u000A    \"theme \u003D \'mytheme\'\"\u000A');codeLines.push('func main() {\u000A');codeLines.push('    data :\u003D txtar.Parse([]byte(files))\u000A    fmt.Println(\"File start:\")\u000A');codeLines.push('    for _, f :\u003D range data.Files {\u000A        filename :\u003D filepath.Join(\"workingDir\", f.Name)\u000A        data :\u003D bytes.TrimSuffix(f.Data, []byte(\"\\n\"))\u000A');codeLines.push('        fmt.Println(filename)\u000A        fmt.Println(string(data))\u000A    }\u000A    fmt.Println(\"File end.\")\u000A}\u000A');codeLines.push('');codeLines.push('');
     </script>
     <script src="site.js" async></script>
   </body>
