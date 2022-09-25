@@ -30,7 +30,7 @@ func main() {
 		data := bytes.TrimSuffix(f.Data, []byte("\n"))
 
 		fmt.Println(filename)
-		fmt.Println(data)
+		fmt.Println(string(data))
 	}
 	fmt.Println("File end.")
 }
