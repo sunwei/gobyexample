@@ -20,11 +20,8 @@ func main() {
 	fmt.Println("File start:")
 
 	// 遍历解析生成的所有文件，通过File结构体获取文件名和文件数据
-	//
-	//type File struct {
-	//	Name string // name of file ("foo/bar.txt")
-	//	Data []byte // text content of file
-	//}
+	// f.Name 获取文件名
+	// f.Data 获取文件数据
 	for _, f := range data.Files {
 		filename := filepath.Join("workingDir", f.Name)
 		data := bytes.TrimSuffix(f.Data, []byte("\n"))
