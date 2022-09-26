@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>深入理解Hugo: Template</title>
+    <link rel=stylesheet href="site.css">
+  </head>
+  <script>
+      onkeydown = (e) => {
+          
+          if (e.key == "ArrowLeft") {
+              window.location.href = 'txtar';
+          }
+          
+          
+      }
+  </script>
+  <body>
+    <div class="example" id="template">
+      <h2><a href="./">深入理解Hugo</a>: Template</h2>
+      
+      <table>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            <a href="https://go.dev/play/p/S5YsQfBXR0H"><img title="Run code" src="play.png" class="run" /></a><img title="Copy code" src="clipboard.png" class="copy" />
+          <pre class="chroma"><span class="kn">package</span> <span class="nx">main</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kn">import</span> <span class="p">(</span>
+    <span class="s">&#34;html/template&#34;</span>
+    <span class="s">&#34;os&#34;</span>
+<span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>index html template</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">var</span> <span class="nx">indexTemplate</span> <span class="p">=</span> <span class="s">&#34;&lt;html&gt;\n&#34;</span> <span class="o">+</span>
+    <span class="s">&#34;  &lt;body&gt;\n&#34;</span> <span class="o">+</span>
+    <span class="s">&#34;    {{.Content}}\n&#34;</span> <span class="o">+</span>
+    <span class="s">&#34;  &lt;/body&gt;\n&#34;</span> <span class="o">+</span>
+    <span class="s">&#34;&lt;/html&gt;\n&#34;</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>Post struct with exposed filed Content</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">type</span> <span class="nx">Post</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">Content</span> <span class="kt">string</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>New Post with content
+Source file could be post.md</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">post</span> <span class="o">:=</span> <span class="nx">Post</span><span class="p">{</span><span class="s">&#34;&lt;h2&gt;Section&lt;/h2&gt;\n&#34;</span> <span class="o">+</span>
+        <span class="s">&#34;    &lt;p&gt;Hello World&lt;/p&gt;\n&#34;</span><span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>New template with indexTemplate, name as &ldquo;index&rdquo;</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+    <span class="nx">tmpl</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span>
+        <span class="nx">template</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="s">&#34;index&#34;</span><span class="p">).</span><span class="nf">Parse</span><span class="p">(</span><span class="nx">indexTemplate</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+    <span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>Render post with template <code>index</code>
+write result to os.Stdout</p>
+
+          </td>
+          <td class="code">
+            
+          <pre class="chroma">
+    <span class="nx">err</span> <span class="p">=</span> <span class="nx">tmpl</span><span class="p">.</span><span class="nf">Execute</span><span class="p">(</span><span class="nx">os</span><span class="p">.</span><span class="nx">Stdout</span><span class="p">,</span> <span class="nx">post</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+      </table>
+      
+      <table>
+        
+        <tr>
+          <td class="docs">
+            <p>body content with tag h2: Section
+tag p: Hello World</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="go">&lt;html&gt;
+</span><span class="go">  &lt;body&gt;
+</span><span class="go">    &amp;lt;h2&amp;gt;Section&amp;lt;/h2&amp;gt;
+</span><span class="go">    &amp;lt;p&amp;gt;Hello World&amp;lt;/p&amp;gt;</span></pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code">
+            
+          <pre class="chroma"><span class="go">  &lt;/body&gt;
+</span><span class="go">&lt;/html&gt;</span></pre>
+          </td>
+        </tr>
+        
+      </table>
+      
+      
+
+    <p class="footer">
+      by <a href="https://sunwei.xyz">孙伟</a>
+      | <a href="https://github.com/sunwei/gobyexample">source</a>
+      | <a href="https://github.com/sunwei/gobyexample#license">license</a>
+      | Inspired by <a href="https://github.com/mmcgrana/gobyexample">gobyexample.com</a>
+      | Build with LOVE 💞
+    </p>
+
+    </div>
+    <script>
+      var codeLines = [];
+      codeLines.push('package main\u000A');codeLines.push('import (\u000A    \"html/template\"\u000A    \"os\"\u000A)\u000A');codeLines.push('var indexTemplate \u003D \"\u003Chtml\u003E\\n\" +\u000A    \"  \u003Cbody\u003E\\n\" +\u000A    \"    {{.Content}}\\n\" +\u000A    \"  \u003C/body\u003E\\n\" +\u000A    \"\u003C/html\u003E\\n\"\u000A');codeLines.push('type Post struct {\u000A    Content string\u000A}\u000A');codeLines.push('func main() {\u000A');codeLines.push('    post :\u003D Post{\"\u003Ch2\u003ESection\u003C/h2\u003E\\n\" +\u000A        \"    \u003Cp\u003EHello World\u003C/p\u003E\\n\"}\u000A');codeLines.push('    tmpl, err :\u003D\u000A        template.New(\"index\").Parse(indexTemplate)\u000A    if err !\u003D nil {\u000A        panic(err)\u000A    }\u000A');codeLines.push('    err \u003D tmpl.Execute(os.Stdout, post)\u000A    if err !\u003D nil {\u000A        panic(err)\u000A    }\u000A}\u000A');codeLines.push('');codeLines.push('');
+    </script>
+    <script src="site.js" async></script>
+  </body>
+</html>
