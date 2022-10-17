@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/alecthomas/chroma v0.8.2
+	github.com/pelletier/go-toml/v2 v2.0.5
 	github.com/russross/blackfriday/v2 v2.1.0
 	golang.org/x/tools v0.1.12
 )
