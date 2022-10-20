@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>深入理解Hugo: Config Provider</title>
+    <link rel=stylesheet href="site.css">
+  </head>
+  <script>
+      onkeydown = (e) => {
+          
+          if (e.key == "ArrowLeft") {
+              window.location.href = 'config-map';
+          }
+          
+          
+      }
+  </script>
+  <body>
+    <div class="example" id="config-provider">
+      <h2><a href="./">深入理解Hugo</a>: Config Provider</h2>
+      
+      <table>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            <a href="https://go.dev/play/p/cDs-EhyWyfS"><img title="Run code" src="play.png" class="run" /></a><img title="Copy code" src="clipboard.png" class="copy" />
+          <pre class="chroma"><span class="kn">package</span> <span class="nx">main</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kn">import</span> <span class="p">(</span>
+    <span class="s">&#34;fmt&#34;</span>
+    <span class="s">&#34;reflect&#34;</span>
+    <span class="s">&#34;strings&#34;</span>
+<span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>Provider 定义提供方需要具备的能力
+通过Key查询值
+设置键值对
+设置默认参数</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">type</span> <span class="nx">Provider</span> <span class="kd">interface</span> <span class="p">{</span>
+    <span class="nf">Get</span><span class="p">(</span><span class="nx">key</span> <span class="kt">string</span><span class="p">)</span> <span class="nx">any</span>
+    <span class="nf">Set</span><span class="p">(</span><span class="nx">key</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">value</span> <span class="nx">any</span><span class="p">)</span>
+    <span class="nf">SetDefaults</span><span class="p">(</span><span class="nx">params</span> <span class="nx">Params</span><span class="p">)</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>Params 参数格式定义
+关键字为字符类型
+值为通用类型any</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">type</span> <span class="nx">Params</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">any</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>Set 根据新传入参数，对应层级进行重写
+pp为新传入参数
+p为当前参数
+将pp的值按层级结构写入p
+递归完成</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="nx">Params</span><span class="p">)</span> <span class="nf">Set</span><span class="p">(</span><span class="nx">pp</span> <span class="nx">Params</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">pp</span> <span class="p">{</span>
+        <span class="nx">vv</span><span class="p">,</span> <span class="nx">found</span> <span class="o">:=</span> <span class="nx">p</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span>
+        <span class="k">if</span> <span class="p">!</span><span class="nx">found</span> <span class="p">{</span>
+            <span class="nx">p</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">=</span> <span class="nx">v</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="k">switch</span> <span class="nx">vvv</span> <span class="o">:=</span> <span class="nx">vv</span><span class="p">.(</span><span class="kd">type</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">case</span> <span class="nx">Params</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nx">pv</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">v</span><span class="p">.(</span><span class="nx">Params</span><span class="p">);</span> <span class="nx">ok</span> <span class="p">{</span>
+                    <span class="nx">vvv</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">pv</span><span class="p">)</span>
+                <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                    <span class="nx">p</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">=</span> <span class="nx">v</span>
+                <span class="p">}</span>
+            <span class="k">default</span><span class="p">:</span>
+                <span class="nx">p</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">=</span> <span class="nx">v</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">New</span><span class="p">()</span> <span class="nx">Provider</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="o">&amp;</span><span class="nx">defaultConfigProvider</span><span class="p">{</span>
+        <span class="nx">root</span><span class="p">:</span> <span class="nb">make</span><span class="p">(</span><span class="nx">Params</span><span class="p">),</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>defaultConfigProvider Provider接口实现对象</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">type</span> <span class="nx">defaultConfigProvider</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">root</span> <span class="nx">Params</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>Get 按key获取值
+约定&rdquo;&ldquo;键对应的是c.root
+嵌套获取值</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">defaultConfigProvider</span><span class="p">)</span> <span class="nf">Get</span><span class="p">(</span><span class="nx">k</span> <span class="kt">string</span><span class="p">)</span> <span class="nx">any</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="nx">k</span> <span class="o">==</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">c</span><span class="p">.</span><span class="nx">root</span>
+    <span class="p">}</span>
+    <span class="nx">key</span><span class="p">,</span> <span class="nx">m</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">getNestedKeyAndMap</span><span class="p">(</span><span class="nx">strings</span><span class="p">.</span><span class="nf">ToLower</span><span class="p">(</span><span class="nx">k</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nx">m</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="kc">nil</span>
+    <span class="p">}</span>
+    <span class="nx">v</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span>
+    <span class="k">return</span> <span class="nx">v</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>getNestedKeyAndMap 支持多级查询
+通过分隔符&rdquo;.&ldquo;获取查询路径</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">defaultConfigProvider</span><span class="p">)</span> <span class="nf">getNestedKeyAndMap</span><span class="p">(</span>
+    <span class="nx">key</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="kt">string</span><span class="p">,</span> <span class="nx">Params</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">parts</span> <span class="p">[]</span><span class="kt">string</span>
+    <span class="nx">parts</span> <span class="p">=</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">Split</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="s">&#34;.&#34;</span><span class="p">)</span>
+    <span class="nx">current</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">root</span>
+    <span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="nx">parts</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+        <span class="nx">next</span><span class="p">,</span> <span class="nx">found</span> <span class="o">:=</span> <span class="nx">current</span><span class="p">[</span><span class="nx">parts</span><span class="p">[</span><span class="nx">i</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="p">!</span><span class="nx">found</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="s">&#34;&#34;</span><span class="p">,</span> <span class="kc">nil</span>
+        <span class="p">}</span>
+        <span class="kd">var</span> <span class="nx">ok</span> <span class="kt">bool</span>
+        <span class="nx">current</span><span class="p">,</span> <span class="nx">ok</span> <span class="p">=</span> <span class="nx">next</span><span class="p">.(</span><span class="nx">Params</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="s">&#34;&#34;</span><span class="p">,</span> <span class="kc">nil</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">parts</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="nx">parts</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="nx">current</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>Set 设置键值对
+统一key的格式为小写字母
+如果传入的值符合Params的要求，通过root进行设置
+如果为非Params类型，则直接赋值</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">defaultConfigProvider</span><span class="p">)</span> <span class="nf">Set</span><span class="p">(</span><span class="nx">k</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">v</span> <span class="nx">any</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">k</span> <span class="p">=</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">ToLower</span><span class="p">(</span><span class="nx">k</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>Set the values directly in root.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="k">if</span> <span class="nx">p</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nf">ToParamsAndPrepare</span><span class="p">(</span><span class="nx">v</span><span class="p">);</span> <span class="nx">ok</span> <span class="p">{</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">        <span class="nx">c</span><span class="p">.</span><span class="nx">root</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">p</span><span class="p">)</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="nx">c</span><span class="p">.</span><span class="nx">root</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">=</span> <span class="nx">v</span>
+    <span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="k">return</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>SetDefaults will set values from params if not already set.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">defaultConfigProvider</span><span class="p">)</span> <span class="nf">SetDefaults</span><span class="p">(</span>
+    <span class="nx">params</span> <span class="nx">Params</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nf">PrepareParams</span><span class="p">(</span><span class="nx">params</span><span class="p">)</span>
+    <span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">params</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">found</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">root</span><span class="p">[</span><span class="nx">k</span><span class="p">];</span> <span class="p">!</span><span class="nx">found</span> <span class="p">{</span>
+            <span class="nx">c</span><span class="p">.</span><span class="nx">root</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">=</span> <span class="nx">v</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>ToParamsAndPrepare converts in to Params and prepares it for use.
+If in is nil, an empty map is returned.
+See PrepareParams.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">func</span> <span class="nf">ToParamsAndPrepare</span><span class="p">(</span><span class="nx">in</span> <span class="nx">any</span><span class="p">)</span> <span class="p">(</span><span class="nx">Params</span><span class="p">,</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="nf">IsNil</span><span class="p">(</span><span class="nx">in</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">Params</span><span class="p">{},</span> <span class="kc">true</span>
+    <span class="p">}</span>
+    <span class="nx">m</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">ToStringMapE</span><span class="p">(</span><span class="nx">in</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">false</span>
+    <span class="p">}</span>
+    <span class="nf">PrepareParams</span><span class="p">(</span><span class="nx">m</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nx">m</span><span class="p">,</span> <span class="kc">true</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>IsNil reports whether v is nil.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">func</span> <span class="nf">IsNil</span><span class="p">(</span><span class="nx">v</span> <span class="nx">any</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="nx">v</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="kc">true</span>
+    <span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">value</span> <span class="o">:=</span> <span class="nx">reflect</span><span class="p">.</span><span class="nf">ValueOf</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span>
+    <span class="k">switch</span> <span class="nx">value</span><span class="p">.</span><span class="nf">Kind</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">case</span> <span class="nx">reflect</span><span class="p">.</span><span class="nx">Chan</span><span class="p">,</span> <span class="nx">reflect</span><span class="p">.</span><span class="nx">Func</span><span class="p">,</span>
+        <span class="nx">reflect</span><span class="p">.</span><span class="nx">Interface</span><span class="p">,</span> <span class="nx">reflect</span><span class="p">.</span><span class="nx">Map</span><span class="p">,</span>
+        <span class="nx">reflect</span><span class="p">.</span><span class="nx">Ptr</span><span class="p">,</span> <span class="nx">reflect</span><span class="p">.</span><span class="nx">Slice</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nx">value</span><span class="p">.</span><span class="nf">IsNil</span><span class="p">()</span>
+    <span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="k">return</span> <span class="kc">false</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>ToStringMapE converts in to map[string]interface{}.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">func</span> <span class="nf">ToStringMapE</span><span class="p">(</span><span class="nx">in</span> <span class="nx">any</span><span class="p">)</span> <span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">any</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">switch</span> <span class="nx">vv</span> <span class="o">:=</span> <span class="nx">in</span><span class="p">.(</span><span class="kd">type</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">case</span> <span class="nx">Params</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nx">vv</span><span class="p">,</span> <span class="kc">nil</span>
+    <span class="k">case</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">:</span>
+        <span class="kd">var</span> <span class="nx">m</span> <span class="p">=</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">any</span><span class="p">{}</span>
+        <span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">vv</span> <span class="p">{</span>
+            <span class="nx">m</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">=</span> <span class="nx">v</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="nx">m</span><span class="p">,</span> <span class="kc">nil</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="k">default</span><span class="p">:</span>
+        <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;value type not supported yet&#34;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>PrepareParams
+* makes all the keys lower cased
+* This will modify the map given.
+* Any nested map[string]interface{}, map[string]string
+* will be converted to Params.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">func</span> <span class="nf">PrepareParams</span><span class="p">(</span><span class="nx">m</span> <span class="nx">Params</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">m</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">retyped</span> <span class="kt">bool</span>
+        <span class="nx">lKey</span> <span class="o">:=</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">ToLower</span><span class="p">(</span><span class="nx">k</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">        <span class="k">switch</span> <span class="nx">vv</span> <span class="o">:=</span> <span class="nx">v</span><span class="p">.(</span><span class="kd">type</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">case</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">any</span><span class="p">:</span>
+            <span class="kd">var</span> <span class="nx">p</span> <span class="nx">Params</span> <span class="p">=</span> <span class="nx">v</span><span class="p">.(</span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">any</span><span class="p">)</span>
+            <span class="nx">v</span> <span class="p">=</span> <span class="nx">p</span>
+            <span class="nf">PrepareParams</span><span class="p">(</span><span class="nx">p</span><span class="p">)</span>
+            <span class="nx">retyped</span> <span class="p">=</span> <span class="kc">true</span>
+        <span class="k">case</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">:</span>
+            <span class="nx">p</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="nx">Params</span><span class="p">)</span>
+            <span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">vv</span> <span class="p">{</span>
+                <span class="nx">p</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">=</span> <span class="nx">v</span>
+            <span class="p">}</span>
+            <span class="nx">v</span> <span class="p">=</span> <span class="nx">p</span>
+            <span class="nf">PrepareParams</span><span class="p">(</span><span class="nx">p</span><span class="p">)</span>
+            <span class="nx">retyped</span> <span class="p">=</span> <span class="kc">true</span>
+        <span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">        <span class="k">if</span> <span class="nx">retyped</span> <span class="o">||</span> <span class="nx">k</span> <span class="o">!=</span> <span class="nx">lKey</span> <span class="p">{</span>
+            <span class="nb">delete</span><span class="p">(</span><span class="nx">m</span><span class="p">,</span> <span class="nx">k</span><span class="p">)</span>
+            <span class="nx">m</span><span class="p">[</span><span class="nx">lKey</span><span class="p">]</span> <span class="p">=</span> <span class="nx">v</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>新建Config Provider实例
+实例中defaultConfigProvider实现了接口</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">provider</span> <span class="o">:=</span> <span class="nf">New</span><span class="p">()</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>模拟设置用户自定义配置项
+config.toml中关于主题的配置信息
+类型是map[string]string
+需要转换成map[string]any，也就是Params类型</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+    <span class="nx">provider</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="s">&#34;&#34;</span><span class="p">,</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">{</span>
+        <span class="s">&#34;theme&#34;</span><span class="p">:</span> <span class="s">&#34;mytheme&#34;</span><span class="p">,</span>
+    <span class="p">})</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>模拟默认配置项
+超时默认时间为30秒</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+    <span class="nx">provider</span><span class="p">.</span><span class="nf">SetDefaults</span><span class="p">(</span><span class="nx">Params</span><span class="p">{</span>
+        <span class="s">&#34;timeout&#34;</span><span class="p">:</span> <span class="s">&#34;30s&#34;</span><span class="p">,</span>
+    <span class="p">})</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>输出提前设置的所有配置信息</p>
+
+          </td>
+          <td class="code">
+            
+          <pre class="chroma">
+    <span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;%#v\n&#34;</span><span class="p">,</span> <span class="nx">provider</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="s">&#34;&#34;</span><span class="p">))</span>
+    <span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;%#v\n&#34;</span><span class="p">,</span> <span class="nx">provider</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="s">&#34;theme&#34;</span><span class="p">))</span>
+    <span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;%#v\n&#34;</span><span class="p">,</span> <span class="nx">provider</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="s">&#34;timeout&#34;</span><span class="p">))</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+      </table>
+      
+      <table>
+        
+        <tr>
+          <td class="docs">
+            <p>输出Config Provider提前设置好的信息
+包括用户自定义信息，和默认信息
+准备Input：自定义信息，默认信息
+得到Output: 通过Config Provider获取所有配置信息</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="go">main.Params{&#34;theme&#34;:&#34;mytheme&#34;, &#34;timeout&#34;:&#34;30s&#34;}</span></pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code">
+            
+          <pre class="chroma"><span class="go">Program exited.</span></pre>
+          </td>
+        </tr>
+        
+      </table>
+      
+      
+
+    <p class="footer">
+      by <a href="https://sunwei.xyz">孙伟</a>
+      | <a href="https://github.com/sunwei/gobyexample">source</a>
+      | <a href="https://github.com/sunwei/gobyexample#license">license</a>
+      | Inspired by <a href="https://github.com/mmcgrana/gobyexample">gobyexample.com</a>
+      | Build with LOVE 💞
+    </p>
+
+    </div>
+    <script>
+      var codeLines = [];
+      codeLines.push('package main\u000A');codeLines.push('import (\u000A    \"fmt\"\u000A    \"reflect\"\u000A    \"strings\"\u000A)\u000A');codeLines.push('type Provider interface {\u000A    Get(key string) any\u000A    Set(key string, value any)\u000A    SetDefaults(params Params)\u000A}\u000A');codeLines.push('type Params map[string]any\u000A');codeLines.push('func (p Params) Set(pp Params) {\u000A    for k, v :\u003D range pp {\u000A        vv, found :\u003D p[k]\u000A        if !found {\u000A            p[k] \u003D v\u000A        } else {\u000A            switch vvv :\u003D vv.(type) {\u000A            case Params:\u000A                if pv, ok :\u003D v.(Params); ok {\u000A                    vvv.Set(pv)\u000A                } else {\u000A                    p[k] \u003D v\u000A                }\u000A            default:\u000A                p[k] \u003D v\u000A            }\u000A        }\u000A    }\u000A}\u000A');codeLines.push('func New() Provider {\u000A    return \u0026defaultConfigProvider{\u000A        root: make(Params),\u000A    }\u000A}\u000A');codeLines.push('type defaultConfigProvider struct {\u000A    root Params\u000A}\u000A');codeLines.push('func (c *defaultConfigProvider) Get(k string) any {\u000A    if k \u003D\u003D \"\" {\u000A        return c.root\u000A    }\u000A    key, m :\u003D c.getNestedKeyAndMap(strings.ToLower(k))\u000A    if m \u003D\u003D nil {\u000A        return nil\u000A    }\u000A    v :\u003D m[key]\u000A    return v\u000A}\u000A');codeLines.push('func (c *defaultConfigProvider) getNestedKeyAndMap(\u000A    key string) (string, Params) {\u000A    var parts []string\u000A    parts \u003D strings.Split(key, \".\")\u000A    current :\u003D c.root\u000A    for i :\u003D 0; i \u003C len(parts)-1; i++ {\u000A        next, found :\u003D current[parts[i]]\u000A        if !found {\u000A            return \"\", nil\u000A        }\u000A        var ok bool\u000A        current, ok \u003D next.(Params)\u000A        if !ok {\u000A            return \"\", nil\u000A        }\u000A    }\u000A    return parts[len(parts)-1], current\u000A}\u000A');codeLines.push('func (c *defaultConfigProvider) Set(k string, v any) {\u000A    k \u003D strings.ToLower(k)\u000A');codeLines.push('    if p, ok :\u003D ToParamsAndPrepare(v); ok {\u000A');codeLines.push('        c.root.Set(p)\u000A    } else {\u000A        c.root[k] \u003D v\u000A    }\u000A');codeLines.push('    return\u000A}\u000A');codeLines.push('func (c *defaultConfigProvider) SetDefaults(\u000A    params Params) {\u000A    PrepareParams(params)\u000A    for k, v :\u003D range params {\u000A        if _, found :\u003D c.root[k]; !found {\u000A            c.root[k] \u003D v\u000A        }\u000A    }\u000A}\u000A');codeLines.push('func ToParamsAndPrepare(in any) (Params, bool) {\u000A    if IsNil(in) {\u000A        return Params{}, true\u000A    }\u000A    m, err :\u003D ToStringMapE(in)\u000A    if err !\u003D nil {\u000A        return nil, false\u000A    }\u000A    PrepareParams(m)\u000A    return m, true\u000A}\u000A');codeLines.push('func IsNil(v any) bool {\u000A    if v \u003D\u003D nil {\u000A        return true\u000A    }\u000A');codeLines.push('    value :\u003D reflect.ValueOf(v)\u000A    switch value.Kind() {\u000A    case reflect.Chan, reflect.Func,\u000A        reflect.Interface, reflect.Map,\u000A        reflect.Ptr, reflect.Slice:\u000A        return value.IsNil()\u000A    }\u000A');codeLines.push('    return false\u000A}\u000A');codeLines.push('func ToStringMapE(in any) (map[string]any, error) {\u000A    switch vv :\u003D in.(type) {\u000A    case Params:\u000A        return vv, nil\u000A    case map[string]string:\u000A        var m \u003D map[string]any{}\u000A        for k, v :\u003D range vv {\u000A            m[k] \u003D v\u000A        }\u000A        return m, nil\u000A');codeLines.push('    default:\u000A        fmt.Println(\"value type not supported yet\")\u000A        return nil, nil\u000A    }\u000A}\u000A');codeLines.push('func PrepareParams(m Params) {\u000A    for k, v :\u003D range m {\u000A        var retyped bool\u000A        lKey :\u003D strings.ToLower(k)\u000A');codeLines.push('        switch vv :\u003D v.(type) {\u000A        case map[string]any:\u000A            var p Params \u003D v.(map[string]any)\u000A            v \u003D p\u000A            PrepareParams(p)\u000A            retyped \u003D true\u000A        case map[string]string:\u000A            p :\u003D make(Params)\u000A            for k, v :\u003D range vv {\u000A                p[k] \u003D v\u000A            }\u000A            v \u003D p\u000A            PrepareParams(p)\u000A            retyped \u003D true\u000A        }\u000A');codeLines.push('        if retyped || k !\u003D lKey {\u000A            delete(m, k)\u000A            m[lKey] \u003D v\u000A        }\u000A    }\u000A}\u000A');codeLines.push('func main() {\u000A');codeLines.push('    provider :\u003D New()\u000A');codeLines.push('    provider.Set(\"\", map[string]string{\u000A        \"theme\": \"mytheme\",\u000A    })\u000A');codeLines.push('    provider.SetDefaults(Params{\u000A        \"timeout\": \"30s\",\u000A    })\u000A');codeLines.push('    fmt.Printf(\"%#v\\n\", provider.Get(\"\"))\u000A    fmt.Printf(\"%#v\\n\", provider.Get(\"theme\"))\u000A    fmt.Printf(\"%#v\\n\", provider.Get(\"timeout\"))\u000A}\u000A');codeLines.push('');codeLines.push('');
+    </script>
+    <script src="site.js" async></script>
+  </body>
+</html>
