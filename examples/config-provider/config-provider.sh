@@ -3,5 +3,7 @@
 # 准备Input：自定义信息，默认信息
 # 得到Output: 通过Config Provider获取所有配置信息
 main.Params{"theme":"mytheme", "timeout":"30s"}
+"mytheme"
+"30s"
 
 Program exited.
