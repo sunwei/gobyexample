@@ -3,3 +3,4 @@ Txtar
 Template
 Config Map
 Config Provider
+Collect Module
