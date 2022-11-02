@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>深入理解Hugo: OverlayFs</title>
+    <link rel=stylesheet href="site.css">
+  </head>
+  <script>
+      onkeydown = (e) => {
+          
+          if (e.key == "ArrowLeft") {
+              window.location.href = 'create-site';
+          }
+          
+          
+          if (e.key == "ArrowRight") {
+              window.location.href = 'overlayfs-afero';
+          }
+          
+      }
+  </script>
+  <body>
+    <div class="example" id="overlayfs">
+      <h2><a href="./">深入理解Hugo</a>: OverlayFs</h2>
+      
+      <table>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            <a href="https://go.dev/play/p/ukOZFY-zKin"><img title="Run code" src="play.png" class="run" /></a><img title="Copy code" src="clipboard.png" class="copy" />
+          <pre class="chroma"><span class="kn">package</span> <span class="nx">main</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kn">import</span> <span class="p">(</span>
+    <span class="s">&#34;bytes&#34;</span>
+    <span class="s">&#34;fmt&#34;</span>
+    <span class="s">&#34;golang.org/x/tools/txtar&#34;</span>
+    <span class="s">&#34;io&#34;</span>
+    <span class="s">&#34;io/fs&#34;</span>
+    <span class="s">&#34;os&#34;</span>
+    <span class="s">&#34;path/filepath&#34;</span>
+<span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">dir</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">os</span><span class="p">.</span><span class="nf">MkdirTemp</span><span class="p">(</span><span class="s">&#34;&#34;</span><span class="p">,</span> <span class="s">&#34;hugo&#34;</span><span class="p">)</span>
+    <span class="k">defer</span> <span class="nx">os</span><span class="p">.</span><span class="nf">RemoveAll</span><span class="p">(</span><span class="nx">dir</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">ofs</span> <span class="o">:=</span> <span class="nf">New</span><span class="p">([]</span><span class="nx">fs</span><span class="p">.</span><span class="nx">StatFS</span><span class="p">{</span>
+        <span class="nf">projectModuleFs</span><span class="p">(</span><span class="nx">dir</span><span class="p">),</span> <span class="nf">mythemeModuleFs</span><span class="p">(</span><span class="nx">dir</span><span class="p">)})</span>
+    <span class="nx">a</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">ofs</span><span class="p">.</span><span class="nf">Open</span><span class="p">(</span><span class="s">&#34;a.md&#34;</span><span class="p">)</span>
+    <span class="k">defer</span> <span class="nx">a</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+    <span class="nx">b</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">ofs</span><span class="p">.</span><span class="nf">Open</span><span class="p">(</span><span class="s">&#34;b.md&#34;</span><span class="p">)</span>
+    <span class="k">defer</span> <span class="nx">b</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+    <span class="nx">c</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">ofs</span><span class="p">.</span><span class="nf">Open</span><span class="p">(</span><span class="s">&#34;c.md&#34;</span><span class="p">)</span>
+    <span class="k">defer</span> <span class="nx">c</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nf">readFile</span><span class="p">(</span><span class="nx">a</span><span class="p">))</span>
+    <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nf">readFile</span><span class="p">(</span><span class="nx">b</span><span class="p">))</span>
+    <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nf">readFile</span><span class="p">(</span><span class="nx">c</span><span class="p">))</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">projectModuleFs</span><span class="p">(</span><span class="nx">dir</span> <span class="kt">string</span><span class="p">)</span> <span class="nx">fs</span><span class="p">.</span><span class="nx">StatFS</span> <span class="p">{</span>
+    <span class="nx">modulePath</span> <span class="o">:=</span> <span class="nx">filepath</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">dir</span><span class="p">,</span> <span class="s">&#34;project&#34;</span><span class="p">)</span>
+    <span class="nx">_</span> <span class="p">=</span> <span class="nx">os</span><span class="p">.</span><span class="nf">Mkdir</span><span class="p">(</span><span class="nx">modulePath</span><span class="p">,</span> <span class="nx">os</span><span class="p">.</span><span class="nx">ModePerm</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">ps</span> <span class="o">:=</span> <span class="s">&#34;-- a.md --\n&#34;</span> <span class="o">+</span>
+        <span class="s">&#34;project: a\n&#34;</span> <span class="o">+</span>
+        <span class="s">&#34;-- c.md --\n&#34;</span> <span class="o">+</span>
+        <span class="s">&#34;project: c&#34;</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nf">writeFiles</span><span class="p">(</span><span class="nx">ps</span><span class="p">,</span> <span class="nx">modulePath</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="k">return</span> <span class="nx">os</span><span class="p">.</span><span class="nf">DirFS</span><span class="p">(</span><span class="nx">modulePath</span><span class="p">).(</span><span class="nx">fs</span><span class="p">.</span><span class="nx">StatFS</span><span class="p">)</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">mythemeModuleFs</span><span class="p">(</span><span class="nx">dir</span> <span class="kt">string</span><span class="p">)</span> <span class="nx">fs</span><span class="p">.</span><span class="nx">StatFS</span> <span class="p">{</span>
+    <span class="nx">modulePath</span> <span class="o">:=</span> <span class="nx">filepath</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">dir</span><span class="p">,</span> <span class="s">&#34;mytheme&#34;</span><span class="p">)</span>
+    <span class="nx">_</span> <span class="p">=</span> <span class="nx">os</span><span class="p">.</span><span class="nf">Mkdir</span><span class="p">(</span><span class="nx">modulePath</span><span class="p">,</span> <span class="nx">os</span><span class="p">.</span><span class="nx">ModePerm</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">ms</span> <span class="o">:=</span> <span class="s">&#34;-- a.md --\n&#34;</span> <span class="o">+</span>
+        <span class="s">&#34;mytheme: a\n&#34;</span> <span class="o">+</span>
+        <span class="s">&#34;-- b.md --\n&#34;</span> <span class="o">+</span>
+        <span class="s">&#34;mytheme: b&#34;</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nf">writeFiles</span><span class="p">(</span><span class="nx">ms</span><span class="p">,</span> <span class="nx">modulePath</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="k">return</span> <span class="nx">os</span><span class="p">.</span><span class="nf">DirFS</span><span class="p">(</span><span class="nx">modulePath</span><span class="p">).(</span><span class="nx">fs</span><span class="p">.</span><span class="nx">StatFS</span><span class="p">)</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">writeFiles</span><span class="p">(</span><span class="nx">s</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">dir</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">data</span> <span class="o">:=</span> <span class="nx">txtar</span><span class="p">.</span><span class="nf">Parse</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">s</span><span class="p">))</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">f</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">data</span><span class="p">.</span><span class="nx">Files</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">os</span><span class="p">.</span><span class="nf">WriteFile</span><span class="p">(</span>
+            <span class="nx">filepath</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">dir</span><span class="p">,</span> <span class="nx">f</span><span class="p">.</span><span class="nx">Name</span><span class="p">),</span>
+            <span class="nx">bytes</span><span class="p">.</span><span class="nf">TrimSuffix</span><span class="p">(</span><span class="nx">f</span><span class="p">.</span><span class="nx">Data</span><span class="p">,</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="s">&#34;\n&#34;</span><span class="p">)),</span>
+            <span class="nx">os</span><span class="p">.</span><span class="nx">ModePerm</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>OverlayFs is a filesystem that overlays multiple filesystems.
+It&rsquo;s by default a read-only filesystem.
+For all operations, the filesystems are checked in order until found.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">type</span> <span class="nx">OverlayFs</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">fss</span> <span class="p">[]</span><span class="nx">fs</span><span class="p">.</span><span class="nx">StatFS</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>New creates a new OverlayFs with the given options.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">func</span> <span class="nf">New</span><span class="p">(</span><span class="nx">fss</span> <span class="p">[]</span><span class="nx">fs</span><span class="p">.</span><span class="nx">StatFS</span><span class="p">)</span> <span class="o">*</span><span class="nx">OverlayFs</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="o">&amp;</span><span class="nx">OverlayFs</span><span class="p">{</span>
+        <span class="nx">fss</span><span class="p">:</span> <span class="nx">fss</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>Open opens a file, returning it or an error, if any happens.
+If name is a directory, a *Dir is returned representing all directories matching name.
+Note that a *Dir must not be used after it&rsquo;s closed.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">func</span> <span class="p">(</span><span class="nx">ofs</span> <span class="o">*</span><span class="nx">OverlayFs</span><span class="p">)</span> <span class="nf">Open</span><span class="p">(</span><span class="nx">name</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">fs</span><span class="p">.</span><span class="nx">File</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">fs</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">ofs</span><span class="p">.</span><span class="nx">fss</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">fs</span><span class="p">.</span><span class="nf">Stat</span><span class="p">(</span><span class="nx">name</span><span class="p">);</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="o">||</span>
+            <span class="p">!</span><span class="nx">os</span><span class="p">.</span><span class="nf">IsNotExist</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nx">fs</span><span class="p">.</span><span class="nf">Open</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">readFile</span><span class="p">(</span><span class="nx">f</span> <span class="nx">fs</span><span class="p">.</span><span class="nx">File</span><span class="p">)</span> <span class="kt">string</span> <span class="p">{</span>
+    <span class="nx">b</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">io</span><span class="p">.</span><span class="nf">ReadAll</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">string</span><span class="p">(</span><span class="nx">b</span><span class="p">)</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+      </table>
+      
+      <table>
+        
+        <tr>
+          <td class="docs">
+            <p>OverlayFs based on golang foundation package fs.Fs
+Result of merge layer</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="go">project: a
+</span><span class="go">mytheme: b
+</span><span class="go">project: c</span></pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code">
+            
+          <pre class="chroma"><span class="go">Program exited.</span></pre>
+          </td>
+        </tr>
+        
+      </table>
+      
+      
+      <p class="next">
+        Next example: <a href="overlayfs-afero">OverlayFs Afero</a>.
+      </p>
+      
+
+    <p class="footer">
+      by <a href="https://sunwei.xyz">孙伟</a>
+      | <a href="https://github.com/sunwei/gobyexample">source</a>
+      | <a href="https://github.com/sunwei/gobyexample#license">license</a>
+      | Inspired by <a href="https://github.com/mmcgrana/gobyexample">gobyexample.com</a>
+      | Build with LOVE 💞
+    </p>
+
+    </div>
+    <script>
+      var codeLines = [];
+      codeLines.push('package main\u000A');codeLines.push('import (\u000A    \"bytes\"\u000A    \"fmt\"\u000A    \"golang.org/x/tools/txtar\"\u000A    \"io\"\u000A    \"io/fs\"\u000A    \"os\"\u000A    \"path/filepath\"\u000A)\u000A');codeLines.push('func main() {\u000A    dir, _ :\u003D os.MkdirTemp(\"\", \"hugo\")\u000A    defer os.RemoveAll(dir)\u000A');codeLines.push('    ofs :\u003D New([]fs.StatFS{\u000A        projectModuleFs(dir), mythemeModuleFs(dir)})\u000A    a, _ :\u003D ofs.Open(\"a.md\")\u000A    defer a.Close()\u000A    b, _ :\u003D ofs.Open(\"b.md\")\u000A    defer b.Close()\u000A    c, _ :\u003D ofs.Open(\"c.md\")\u000A    defer c.Close()\u000A');codeLines.push('    fmt.Println(readFile(a))\u000A    fmt.Println(readFile(b))\u000A    fmt.Println(readFile(c))\u000A}\u000A');codeLines.push('func projectModuleFs(dir string) fs.StatFS {\u000A    modulePath :\u003D filepath.Join(dir, \"project\")\u000A    _ \u003D os.Mkdir(modulePath, os.ModePerm)\u000A');codeLines.push('    ps :\u003D \"-- a.md --\\n\" +\u000A        \"project: a\\n\" +\u000A        \"-- c.md --\\n\" +\u000A        \"project: c\"\u000A');codeLines.push('    writeFiles(ps, modulePath)\u000A');codeLines.push('    return os.DirFS(modulePath).(fs.StatFS)\u000A}\u000A');codeLines.push('func mythemeModuleFs(dir string) fs.StatFS {\u000A    modulePath :\u003D filepath.Join(dir, \"mytheme\")\u000A    _ \u003D os.Mkdir(modulePath, os.ModePerm)\u000A');codeLines.push('    ms :\u003D \"-- a.md --\\n\" +\u000A        \"mytheme: a\\n\" +\u000A        \"-- b.md --\\n\" +\u000A        \"mytheme: b\"\u000A');codeLines.push('    writeFiles(ms, modulePath)\u000A');codeLines.push('    return os.DirFS(modulePath).(fs.StatFS)\u000A}\u000A');codeLines.push('func writeFiles(s string, dir string) {\u000A    data :\u003D txtar.Parse([]byte(s))\u000A');codeLines.push('    for _, f :\u003D range data.Files {\u000A        if err :\u003D os.WriteFile(\u000A            filepath.Join(dir, f.Name),\u000A            bytes.TrimSuffix(f.Data, []byte(\"\\n\")),\u000A            os.ModePerm); err !\u003D nil {\u000A            panic(err)\u000A        }\u000A    }\u000A');codeLines.push('}\u000A');codeLines.push('type OverlayFs struct {\u000A    fss []fs.StatFS\u000A}\u000A');codeLines.push('func New(fss []fs.StatFS) *OverlayFs {\u000A    return \u0026OverlayFs{\u000A        fss: fss,\u000A    }\u000A}\u000A');codeLines.push('func (ofs *OverlayFs) Open(name string) (fs.File, error) {\u000A    for _, fs :\u003D range ofs.fss {\u000A        if _, err :\u003D fs.Stat(name); err \u003D\u003D nil ||\u000A            !os.IsNotExist(err) {\u000A            return fs.Open(name)\u000A        }\u000A    }\u000A    return nil, nil\u000A}\u000A');codeLines.push('func readFile(f fs.File) string {\u000A    b, _ :\u003D io.ReadAll(f)\u000A    return string(b)\u000A}\u000A');codeLines.push('');codeLines.push('');
+    </script>
+    <script src="site.js" async></script>
+  </body>
+</html>
