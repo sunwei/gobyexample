@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>深入理解Hugo: PathSpec</title>
+    <link rel=stylesheet href="site.css">
+  </head>
+  <script>
+      onkeydown = (e) => {
+          
+          if (e.key == "ArrowLeft") {
+              window.location.href = 'radix-tree';
+          }
+          
+          
+      }
+  </script>
+  <body>
+    <div class="example" id="pathspec">
+      <h2><a href="./">深入理解Hugo</a>: PathSpec</h2>
+      
+      <table>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            <a href="https://go.dev/play/p/FeZ2ukvZwpI"><img title="Run code" src="play.png" class="run" /></a><img title="Copy code" src="clipboard.png" class="copy" />
+          <pre class="chroma"><span class="kn">package</span> <span class="nx">main</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kn">import</span> <span class="p">(</span>
+    <span class="s">&#34;bytes&#34;</span>
+    <span class="s">&#34;fmt&#34;</span>
+    <span class="s">&#34;github.com/sunwei/gobyexample/modules/overlayfs&#34;</span>
+    <span class="s">&#34;github.com/sunwei/gobyexample/modules/radixtree&#34;</span>
+    <span class="s">&#34;golang.org/x/tools/txtar&#34;</span>
+    <span class="s">&#34;io&#34;</span>
+    <span class="s">&#34;io/fs&#34;</span>
+    <span class="s">&#34;os&#34;</span>
+    <span class="s">&#34;path&#34;</span>
+    <span class="s">&#34;path/filepath&#34;</span>
+<span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">dir</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">os</span><span class="p">.</span><span class="nf">MkdirTemp</span><span class="p">(</span><span class="s">&#34;&#34;</span><span class="p">,</span> <span class="s">&#34;hugo&#34;</span><span class="p">)</span>
+    <span class="k">defer</span> <span class="nx">os</span><span class="p">.</span><span class="nf">RemoveAll</span><span class="p">(</span><span class="nx">dir</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">myContentPath</span> <span class="o">:=</span> <span class="nx">filepath</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">dir</span><span class="p">,</span> <span class="s">&#34;mycontent&#34;</span><span class="p">)</span>
+    <span class="nx">_</span> <span class="p">=</span> <span class="nx">os</span><span class="p">.</span><span class="nf">Mkdir</span><span class="p">(</span><span class="nx">myContentPath</span><span class="p">,</span> <span class="nx">os</span><span class="p">.</span><span class="nx">ModePerm</span><span class="p">)</span>
+    <span class="nx">myContent2Path</span> <span class="o">:=</span> <span class="nx">filepath</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">dir</span><span class="p">,</span> <span class="s">&#34;mycontent2&#34;</span><span class="p">)</span>
+    <span class="nx">_</span> <span class="p">=</span> <span class="nx">os</span><span class="p">.</span><span class="nf">Mkdir</span><span class="p">(</span><span class="nx">myContent2Path</span><span class="p">,</span> <span class="nx">os</span><span class="p">.</span><span class="nx">ModePerm</span><span class="p">)</span>
+    <span class="nx">themePath</span> <span class="o">:=</span> <span class="nx">filepath</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">dir</span><span class="p">,</span> <span class="s">&#34;mytheme&#34;</span><span class="p">)</span>
+    <span class="nx">_</span> <span class="p">=</span> <span class="nx">os</span><span class="p">.</span><span class="nf">Mkdir</span><span class="p">(</span><span class="nx">themePath</span><span class="p">,</span> <span class="nx">os</span><span class="p">.</span><span class="nx">ModePerm</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">mcs</span> <span class="o">:=</span> <span class="s">&#34;-- a.md --\n&#34;</span> <span class="o">+</span>
+        <span class="s">&#34;mycontent: a\n&#34;</span> <span class="o">+</span>
+        <span class="s">&#34;-- c.md --\n&#34;</span> <span class="o">+</span>
+        <span class="s">&#34;mycontent: c&#34;</span>
+    <span class="nf">writeFiles</span><span class="p">(</span><span class="nx">mcs</span><span class="p">,</span> <span class="nx">myContentPath</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">mc2s</span> <span class="o">:=</span> <span class="s">&#34;-- a.md --\n&#34;</span> <span class="o">+</span>
+        <span class="s">&#34;mycontent2: a\n&#34;</span> <span class="o">+</span>
+        <span class="s">&#34;-- d.md --\n&#34;</span> <span class="o">+</span>
+        <span class="s">&#34;mycontent2: d&#34;</span>
+    <span class="nf">writeFiles</span><span class="p">(</span><span class="nx">mc2s</span><span class="p">,</span> <span class="nx">myContent2Path</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">ts</span> <span class="o">:=</span> <span class="s">&#34;-- a.md --\n&#34;</span> <span class="o">+</span>
+        <span class="s">&#34;mytheme: a\n&#34;</span> <span class="o">+</span>
+        <span class="s">&#34;-- b.md --\n&#34;</span> <span class="o">+</span>
+        <span class="s">&#34;mytheme: b&#34;</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nf">writeFiles</span><span class="p">(</span><span class="nx">ts</span><span class="p">,</span> <span class="nx">themePath</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">p</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">Paths</span><span class="p">{</span>
+        <span class="nx">WorkingDir</span><span class="p">:</span> <span class="nx">dir</span><span class="p">,</span>
+        <span class="nx">AllModules</span><span class="p">:</span> <span class="p">[]</span><span class="nx">Module</span><span class="p">{</span>
+            <span class="p">{</span>
+                <span class="nx">ProjectMod</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                <span class="nx">Dir</span><span class="p">:</span>        <span class="nx">dir</span><span class="p">,</span>
+                <span class="nx">Mounts</span><span class="p">:</span> <span class="p">[]</span><span class="nx">Mount</span><span class="p">{</span>
+                    <span class="p">{</span><span class="nx">Source</span><span class="p">:</span> <span class="s">&#34;mycontent&#34;</span><span class="p">,</span>
+                        <span class="nx">Target</span><span class="p">:</span> <span class="s">&#34;content&#34;</span><span class="p">},</span>
+                    <span class="p">{</span><span class="nx">Source</span><span class="p">:</span> <span class="s">&#34;mycontent2&#34;</span><span class="p">,</span>
+                        <span class="nx">Target</span><span class="p">:</span> <span class="s">&#34;content&#34;</span><span class="p">},</span>
+                <span class="p">},</span>
+            <span class="p">},</span>
+            <span class="p">{</span>
+                <span class="nx">ProjectMod</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+                <span class="nx">Dir</span><span class="p">:</span>        <span class="nx">dir</span><span class="p">,</span>
+                <span class="nx">Mounts</span><span class="p">:</span> <span class="p">[]</span><span class="nx">Mount</span><span class="p">{</span>
+                    <span class="p">{</span><span class="nx">Source</span><span class="p">:</span> <span class="s">&#34;mytheme&#34;</span><span class="p">,</span>
+                        <span class="nx">Target</span><span class="p">:</span> <span class="s">&#34;content&#34;</span><span class="p">},</span>
+                <span class="p">},</span>
+            <span class="p">},</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">collector</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">filesystemsCollector</span><span class="p">{</span>
+        <span class="nx">overlayMountsContent</span><span class="p">:</span> <span class="nx">overlayfs</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span>
+            <span class="p">[]</span><span class="nx">overlayfs</span><span class="p">.</span><span class="nx">AbsStatFss</span><span class="p">{}),</span>
+    <span class="p">}</span>
+    <span class="nf">createOverlayFs</span><span class="p">(</span><span class="nx">collector</span><span class="p">,</span> <span class="nx">p</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="kd">var</span> <span class="nx">f</span> <span class="nx">fs</span><span class="p">.</span><span class="nx">File</span>
+    <span class="nx">fis</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">collector</span><span class="p">.</span>
+        <span class="nx">overlayMountsContent</span><span class="p">.</span><span class="nf">ReadDir</span><span class="p">(</span><span class="nx">filepathSeparator</span><span class="p">)</span>
+    <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">fi</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">fis</span> <span class="p">{</span>
+        <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">fi</span><span class="p">.</span><span class="nf">Name</span><span class="p">())</span>
+        <span class="nx">f</span><span class="p">,</span> <span class="nx">_</span> <span class="p">=</span> <span class="nx">collector</span><span class="p">.</span>
+            <span class="nx">overlayMountsContent</span><span class="p">.</span><span class="nf">Open</span><span class="p">(</span><span class="nx">fi</span><span class="p">.</span><span class="nf">Name</span><span class="p">())</span>
+        <span class="nx">b</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">io</span><span class="p">.</span><span class="nf">ReadAll</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span>
+        <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nb">string</span><span class="p">(</span><span class="nx">b</span><span class="p">))</span>
+    <span class="p">}</span>
+    <span class="k">defer</span> <span class="nx">f</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">writeFiles</span><span class="p">(</span><span class="nx">s</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">dir</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">data</span> <span class="o">:=</span> <span class="nx">txtar</span><span class="p">.</span><span class="nf">Parse</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">s</span><span class="p">))</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">f</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">data</span><span class="p">.</span><span class="nx">Files</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">os</span><span class="p">.</span><span class="nf">WriteFile</span><span class="p">(</span>
+            <span class="nx">filepath</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">dir</span><span class="p">,</span> <span class="nx">f</span><span class="p">.</span><span class="nx">Name</span><span class="p">),</span>
+            <span class="nx">bytes</span><span class="p">.</span><span class="nf">TrimSuffix</span><span class="p">(</span><span class="nx">f</span><span class="p">.</span><span class="nx">Data</span><span class="p">,</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="s">&#34;\n&#34;</span><span class="p">)),</span>
+            <span class="nx">os</span><span class="p">.</span><span class="nx">ModePerm</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">var</span> <span class="nx">filepathSeparator</span> <span class="p">=</span> <span class="nb">string</span><span class="p">(</span><span class="nx">filepath</span><span class="p">.</span><span class="nx">Separator</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>RootMapping describes a virtual file or directory mount.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">type</span> <span class="nx">RootMapping</span> <span class="kd">struct</span> <span class="p">{</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>The virtual mount.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+    <span class="nx">From</span> <span class="kt">string</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>The source directory or file.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+    <span class="nx">To</span> <span class="kt">string</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>The base of To. May be empty if an
+absolute path was provided.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+    <span class="nx">ToBasedir</span> <span class="kt">string</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>Whether this is a mount in the main project.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+    <span class="nx">IsProject</span> <span class="kt">bool</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>The virtual mount point, e.g. &ldquo;blog&rdquo;.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+    <span class="nx">path</span> <span class="kt">string</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">Mount</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">Source</span> <span class="kt">string</span>
+    <span class="nx">Target</span> <span class="kt">string</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">Module</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">ProjectMod</span> <span class="kt">bool</span>
+    <span class="nx">Mounts</span>     <span class="p">[]</span><span class="nx">Mount</span>
+    <span class="nx">Dir</span>        <span class="kt">string</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">Modules</span> <span class="p">[]</span><span class="nx">Module</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">Paths</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">AllModules</span> <span class="nx">Modules</span>
+    <span class="nx">WorkingDir</span> <span class="kt">string</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>A RootMappingFs maps several roots into one.
+Note that the root of this filesystem
+is directories only, and they will be returned
+in Readdir and Readdirnames
+in the order given.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">type</span> <span class="nx">RootMappingFs</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">fs</span>            <span class="nx">overlayfs</span><span class="p">.</span><span class="nx">AbsStatFss</span>
+    <span class="nx">rootMapToReal</span> <span class="o">*</span><span class="nx">radixtree</span><span class="p">.</span><span class="nx">Tree</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">filesystemsCollector</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">overlayMountsContent</span> <span class="o">*</span><span class="nx">overlayfs</span><span class="p">.</span><span class="nx">OverlayFs</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">createOverlayFs</span><span class="p">(</span>
+    <span class="nx">collector</span> <span class="o">*</span><span class="nx">filesystemsCollector</span><span class="p">,</span>
+    <span class="nx">path</span> <span class="o">*</span><span class="nx">Paths</span><span class="p">)</span> <span class="p">{</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">md</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">path</span><span class="p">.</span><span class="nx">AllModules</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">fromToContent</span> <span class="p">[]</span><span class="nx">RootMapping</span>
+        <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">mount</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">md</span><span class="p">.</span><span class="nx">Mounts</span> <span class="p">{</span>
+            <span class="nx">rm</span> <span class="o">:=</span> <span class="nx">RootMapping</span><span class="p">{</span>
+                <span class="nx">From</span><span class="p">:</span>      <span class="nx">mount</span><span class="p">.</span><span class="nx">Target</span><span class="p">,</span> <span class="c1">// content
+</span><span class="c1"></span>                <span class="nx">To</span><span class="p">:</span>        <span class="nx">mount</span><span class="p">.</span><span class="nx">Source</span><span class="p">,</span> <span class="c1">// mycontent
+</span><span class="c1"></span>                <span class="nx">ToBasedir</span><span class="p">:</span> <span class="nx">md</span><span class="p">.</span><span class="nx">Dir</span><span class="p">,</span>
+                <span class="nx">IsProject</span><span class="p">:</span> <span class="nx">md</span><span class="p">.</span><span class="nx">ProjectMod</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="nx">fromToContent</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">fromToContent</span><span class="p">,</span> <span class="nx">rm</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="nx">rmfsContent</span> <span class="o">:=</span> <span class="nf">newRootMappingFs</span><span class="p">(</span><span class="nx">fromToContent</span><span class="o">...</span><span class="p">)</span>
+        <span class="nx">collector</span><span class="p">.</span><span class="nx">overlayMountsContent</span> <span class="p">=</span> <span class="nx">collector</span><span class="p">.</span>
+            <span class="nx">overlayMountsContent</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="nx">rmfsContent</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="k">return</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>NewRootMappingFs creates a new RootMappingFs
+on top of the provided with root mappings with
+some optional metadata about the root.
+Note that From represents a virtual root
+that maps to the actual filename in To.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">func</span> <span class="nf">newRootMappingFs</span><span class="p">(</span>
+    <span class="nx">rms</span> <span class="o">...</span><span class="nx">RootMapping</span><span class="p">)</span> <span class="o">*</span><span class="nx">RootMappingFs</span> <span class="p">{</span>
+    <span class="nx">t</span> <span class="o">:=</span> <span class="nx">radixtree</span><span class="p">.</span><span class="nf">New</span><span class="p">()</span>
+    <span class="kd">var</span> <span class="nx">virtualRoots</span> <span class="p">[]</span><span class="nx">RootMapping</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">rm</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">rms</span> <span class="p">{</span>
+        <span class="nx">key</span> <span class="o">:=</span> <span class="nx">filepathSeparator</span> <span class="o">+</span> <span class="nx">rm</span><span class="p">.</span><span class="nx">From</span>
+        <span class="nx">mappings</span> <span class="o">:=</span> <span class="nf">getRms</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span> <span class="nx">key</span><span class="p">)</span>
+        <span class="nx">mappings</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">mappings</span><span class="p">,</span> <span class="nx">rm</span><span class="p">)</span>
+        <span class="nx">t</span><span class="p">.</span><span class="nf">Insert</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">mappings</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">        <span class="nx">virtualRoots</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">virtualRoots</span><span class="p">,</span> <span class="nx">rm</span><span class="p">)</span>
+    <span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">t</span><span class="p">.</span><span class="nf">Insert</span><span class="p">(</span><span class="nx">filepathSeparator</span><span class="p">,</span> <span class="nx">virtualRoots</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="k">return</span> <span class="o">&amp;</span><span class="nx">RootMappingFs</span><span class="p">{</span>
+        <span class="nx">rootMapToReal</span><span class="p">:</span> <span class="nx">t</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">RootMappingFs</span><span class="p">)</span> <span class="nf">Abs</span><span class="p">(</span><span class="nx">name</span> <span class="kt">string</span><span class="p">)</span> <span class="p">[]</span><span class="kt">string</span> <span class="p">{</span>
+    <span class="nx">mappings</span> <span class="o">:=</span> <span class="nf">getRms</span><span class="p">(</span><span class="nx">m</span><span class="p">.</span><span class="nx">rootMapToReal</span><span class="p">,</span> <span class="nx">name</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="kd">var</span> <span class="nx">paths</span> <span class="p">[]</span><span class="kt">string</span>
+    <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">m</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">mappings</span> <span class="p">{</span>
+        <span class="nx">paths</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">paths</span><span class="p">,</span> <span class="nx">path</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span>
+            <span class="nx">m</span><span class="p">.</span><span class="nx">ToBasedir</span><span class="p">,</span> <span class="nx">m</span><span class="p">.</span><span class="nx">To</span><span class="p">))</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">paths</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">RootMappingFs</span><span class="p">)</span> <span class="nf">Fss</span><span class="p">()</span> <span class="p">[]</span><span class="nx">fs</span><span class="p">.</span><span class="nx">StatFS</span> <span class="p">{</span>
+    <span class="nx">mappings</span> <span class="o">:=</span> <span class="nf">getRms</span><span class="p">(</span>
+        <span class="nx">m</span><span class="p">.</span><span class="nx">rootMapToReal</span><span class="p">,</span> <span class="nx">filepathSeparator</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="kd">var</span> <span class="nx">fss</span> <span class="p">[]</span><span class="nx">fs</span><span class="p">.</span><span class="nx">StatFS</span>
+    <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">m</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">mappings</span> <span class="p">{</span>
+        <span class="nx">fss</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">fss</span><span class="p">,</span> <span class="nx">os</span><span class="p">.</span><span class="nf">DirFS</span><span class="p">(</span>
+            <span class="nx">path</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">m</span><span class="p">.</span><span class="nx">ToBasedir</span><span class="p">,</span> <span class="nx">m</span><span class="p">.</span><span class="nx">To</span><span class="p">)).(</span><span class="nx">fs</span><span class="p">.</span><span class="nx">StatFS</span><span class="p">))</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">fss</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">getRms</span><span class="p">(</span><span class="nx">t</span> <span class="o">*</span><span class="nx">radixtree</span><span class="p">.</span><span class="nx">Tree</span><span class="p">,</span>
+    <span class="nx">key</span> <span class="kt">string</span><span class="p">)</span> <span class="p">[]</span><span class="nx">RootMapping</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">mappings</span> <span class="p">[]</span><span class="nx">RootMapping</span>
+    <span class="nx">v</span><span class="p">,</span> <span class="nx">found</span> <span class="o">:=</span> <span class="nx">t</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">found</span> <span class="p">{</span>
+        <span class="nx">mappings</span> <span class="p">=</span> <span class="nx">v</span><span class="p">.([]</span><span class="nx">RootMapping</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">mappings</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+      </table>
+      
+      <table>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="go">a.md
+</span><span class="go">mycontent: a
+</span><span class="go">b.md
+</span><span class="go">mytheme: b
+</span><span class="go">c.md
+</span><span class="go">mycontent: c
+</span><span class="go">d.md
+</span><span class="go">mycontent2: d</span></pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code">
+            
+          <pre class="chroma"><span class="go">Program exited.</span></pre>
+          </td>
+        </tr>
+        
+      </table>
+      
+      
+
+    <p class="footer">
+      by <a href="https://sunwei.xyz">孙伟</a>
+      | <a href="https://github.com/sunwei/gobyexample">source</a>
+      | <a href="https://github.com/sunwei/gobyexample#license">license</a>
+      | Inspired by <a href="https://github.com/mmcgrana/gobyexample">gobyexample.com</a>
+      | Build with LOVE 💞
+    </p>
+
+    </div>
+    <script>
+      var codeLines = [];
+      codeLines.push('package main\u000A');codeLines.push('import (\u000A    \"bytes\"\u000A    \"fmt\"\u000A    \"github.com/sunwei/gobyexample/modules/overlayfs\"\u000A    \"github.com/sunwei/gobyexample/modules/radixtree\"\u000A    \"golang.org/x/tools/txtar\"\u000A    \"io\"\u000A    \"io/fs\"\u000A    \"os\"\u000A    \"path\"\u000A    \"path/filepath\"\u000A)\u000A');codeLines.push('func main() {\u000A    dir, _ :\u003D os.MkdirTemp(\"\", \"hugo\")\u000A    defer os.RemoveAll(dir)\u000A');codeLines.push('    myContentPath :\u003D filepath.Join(dir, \"mycontent\")\u000A    _ \u003D os.Mkdir(myContentPath, os.ModePerm)\u000A    myContent2Path :\u003D filepath.Join(dir, \"mycontent2\")\u000A    _ \u003D os.Mkdir(myContent2Path, os.ModePerm)\u000A    themePath :\u003D filepath.Join(dir, \"mytheme\")\u000A    _ \u003D os.Mkdir(themePath, os.ModePerm)\u000A');codeLines.push('    mcs :\u003D \"-- a.md --\\n\" +\u000A        \"mycontent: a\\n\" +\u000A        \"-- c.md --\\n\" +\u000A        \"mycontent: c\"\u000A    writeFiles(mcs, myContentPath)\u000A');codeLines.push('    mc2s :\u003D \"-- a.md --\\n\" +\u000A        \"mycontent2: a\\n\" +\u000A        \"-- d.md --\\n\" +\u000A        \"mycontent2: d\"\u000A    writeFiles(mc2s, myContent2Path)\u000A');codeLines.push('    ts :\u003D \"-- a.md --\\n\" +\u000A        \"mytheme: a\\n\" +\u000A        \"-- b.md --\\n\" +\u000A        \"mytheme: b\"\u000A');codeLines.push('    writeFiles(ts, themePath)\u000A');codeLines.push('    p :\u003D \u0026Paths{\u000A        WorkingDir: dir,\u000A        AllModules: []Module{\u000A            {\u000A                ProjectMod: true,\u000A                Dir:        dir,\u000A                Mounts: []Mount{\u000A                    {Source: \"mycontent\",\u000A                        Target: \"content\"},\u000A                    {Source: \"mycontent2\",\u000A                        Target: \"content\"},\u000A                },\u000A            },\u000A            {\u000A                ProjectMod: false,\u000A                Dir:        dir,\u000A                Mounts: []Mount{\u000A                    {Source: \"mytheme\",\u000A                        Target: \"content\"},\u000A                },\u000A            },\u000A        },\u000A    }\u000A');codeLines.push('    collector :\u003D \u0026filesystemsCollector{\u000A        overlayMountsContent: overlayfs.New(\u000A            []overlayfs.AbsStatFss{}),\u000A    }\u000A    createOverlayFs(collector, p)\u000A');codeLines.push('    var f fs.File\u000A    fis, _ :\u003D collector.\u000A        overlayMountsContent.ReadDir(filepathSeparator)\u000A    for _, fi :\u003D range fis {\u000A        fmt.Println(fi.Name())\u000A        f, _ \u003D collector.\u000A            overlayMountsContent.Open(fi.Name())\u000A        b, _ :\u003D io.ReadAll(f)\u000A        fmt.Println(string(b))\u000A    }\u000A    defer f.Close()\u000A}\u000A');codeLines.push('func writeFiles(s string, dir string) {\u000A    data :\u003D txtar.Parse([]byte(s))\u000A');codeLines.push('    for _, f :\u003D range data.Files {\u000A        if err :\u003D os.WriteFile(\u000A            filepath.Join(dir, f.Name),\u000A            bytes.TrimSuffix(f.Data, []byte(\"\\n\")),\u000A            os.ModePerm); err !\u003D nil {\u000A            panic(err)\u000A        }\u000A    }\u000A}\u000A');codeLines.push('var filepathSeparator \u003D string(filepath.Separator)\u000A');codeLines.push('type RootMapping struct {\u000A');codeLines.push('    From string\u000A');codeLines.push('    To string\u000A');codeLines.push('    ToBasedir string\u000A');codeLines.push('    IsProject bool\u000A');codeLines.push('    path string\u000A}\u000A');codeLines.push('type Mount struct {\u000A    Source string\u000A    Target string\u000A}\u000A');codeLines.push('type Module struct {\u000A    ProjectMod bool\u000A    Mounts     []Mount\u000A    Dir        string\u000A}\u000A');codeLines.push('type Modules []Module\u000A');codeLines.push('type Paths struct {\u000A    AllModules Modules\u000A    WorkingDir string\u000A}\u000A');codeLines.push('type RootMappingFs struct {\u000A    fs            overlayfs.AbsStatFss\u000A    rootMapToReal *radixtree.Tree\u000A}\u000A');codeLines.push('type filesystemsCollector struct {\u000A    overlayMountsContent *overlayfs.OverlayFs\u000A}\u000A');codeLines.push('func createOverlayFs(\u000A    collector *filesystemsCollector,\u000A    path *Paths) {\u000A');codeLines.push('    for _, md :\u003D range path.AllModules {\u000A        var fromToContent []RootMapping\u000A        for _, mount :\u003D range md.Mounts {\u000A            rm :\u003D RootMapping{\u000A                From:      mount.Target, // content\u000A                To:        mount.Source, // mycontent\u000A                ToBasedir: md.Dir,\u000A                IsProject: md.ProjectMod,\u000A            }\u000A            fromToContent \u003D append(fromToContent, rm)\u000A        }\u000A        rmfsContent :\u003D newRootMappingFs(fromToContent...)\u000A        collector.overlayMountsContent \u003D collector.\u000A            overlayMountsContent.Append(rmfsContent)\u000A    }\u000A    return\u000A}\u000A');codeLines.push('func newRootMappingFs(\u000A    rms ...RootMapping) *RootMappingFs {\u000A    t :\u003D radixtree.New()\u000A    var virtualRoots []RootMapping\u000A');codeLines.push('    for _, rm :\u003D range rms {\u000A        key :\u003D filepathSeparator + rm.From\u000A        mappings :\u003D getRms(t, key)\u000A        mappings \u003D append(mappings, rm)\u000A        t.Insert(key, mappings)\u000A');codeLines.push('        virtualRoots \u003D append(virtualRoots, rm)\u000A    }\u000A');codeLines.push('    t.Insert(filepathSeparator, virtualRoots)\u000A');codeLines.push('    return \u0026RootMappingFs{\u000A        rootMapToReal: t,\u000A    }\u000A}\u000A');codeLines.push('func (m *RootMappingFs) Abs(name string) []string {\u000A    mappings :\u003D getRms(m.rootMapToReal, name)\u000A');codeLines.push('    var paths []string\u000A    for _, m :\u003D range mappings {\u000A        paths \u003D append(paths, path.Join(\u000A            m.ToBasedir, m.To))\u000A    }\u000A    return paths\u000A}\u000A');codeLines.push('func (m *RootMappingFs) Fss() []fs.StatFS {\u000A    mappings :\u003D getRms(\u000A        m.rootMapToReal, filepathSeparator)\u000A');codeLines.push('    var fss []fs.StatFS\u000A    for _, m :\u003D range mappings {\u000A        fss \u003D append(fss, os.DirFS(\u000A            path.Join(m.ToBasedir, m.To)).(fs.StatFS))\u000A    }\u000A    return fss\u000A}\u000A');codeLines.push('func getRms(t *radixtree.Tree,\u000A    key string) []RootMapping {\u000A    var mappings []RootMapping\u000A    v, found :\u003D t.Get(key)\u000A    if found {\u000A        mappings \u003D v.([]RootMapping)\u000A    }\u000A    return mappings\u000A}\u000A');codeLines.push('');codeLines.push('');
+    </script>
+    <script src="site.js" async></script>
+  </body>
+</html>

@@ -13,6 +13,10 @@
           }
           
           
+          if (e.key == "ArrowRight") {
+              window.location.href = 'pathspec';
+          }
+          
       }
   </script>
   <body>
@@ -26,7 +30,7 @@
             
           </td>
           <td class="code leading">
-            <a href="https://go.dev/play/p/lFc_g6Opzp6"><img title="Run code" src="play.png" class="run" /></a><img title="Copy code" src="clipboard.png" class="copy" />
+            <a href="https://go.dev/play/p/prxjytdLltJ"><img title="Run code" src="play.png" class="run" /></a><img title="Copy code" src="clipboard.png" class="copy" />
           <pre class="chroma"><span class="kn">package</span> <span class="nx">main</span>
 </pre>
           </td>
@@ -41,6 +45,7 @@
           <pre class="chroma"><span class="kn">import</span> <span class="p">(</span>
     <span class="s">&#34;fmt&#34;</span>
     <span class="s">&#34;sort&#34;</span>
+    <span class="s">&#34;strings&#34;</span>
 <span class="p">)</span>
 </pre>
           </td>
@@ -60,13 +65,28 @@
     <span class="p">}</span>
     <span class="nx">kvs</span> <span class="o">:=</span> <span class="p">[]</span><span class="nx">kv</span><span class="p">{</span>
         <span class="p">{</span><span class="s">&#34;/content/a.md&#34;</span><span class="p">,</span> <span class="s">&#34;aaa&#34;</span><span class="p">},</span>
+        <span class="p">{</span><span class="s">&#34;/content/a.md&#34;</span><span class="p">,</span> <span class="s">&#34;ddd&#34;</span><span class="p">},</span>
         <span class="p">{</span><span class="s">&#34;/content/b.md&#34;</span><span class="p">,</span> <span class="s">&#34;bbb&#34;</span><span class="p">},</span>
         <span class="p">{</span><span class="s">&#34;/content/c.md&#34;</span><span class="p">,</span> <span class="s">&#34;ccc&#34;</span><span class="p">},</span>
+        <span class="p">{</span><span class="s">&#34;/&#34;</span><span class="p">,</span> <span class="s">&#34;root&#34;</span><span class="p">},</span>
     <span class="p">}</span>
     <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">kv</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">kvs</span> <span class="p">{</span>
         <span class="nx">t</span><span class="p">.</span><span class="nf">Insert</span><span class="p">(</span><span class="nx">kv</span><span class="p">.</span><span class="nx">k</span><span class="p">,</span> <span class="nx">kv</span><span class="p">.</span><span class="nx">v</span><span class="p">)</span>
     <span class="p">}</span>
     <span class="nx">t</span><span class="p">.</span><span class="nf">Print</span><span class="p">()</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">v</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">t</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="s">&#34;/&#34;</span><span class="p">)</span>
+    <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;=--=&#34;</span><span class="p">)</span>
+    <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span>
 <span class="p">}</span>
 </pre>
           </td>
@@ -136,10 +156,63 @@
           <pre class="chroma">
 <span class="kd">func</span> <span class="nf">New</span><span class="p">()</span> <span class="o">*</span><span class="nx">Tree</span> <span class="p">{</span>
     <span class="k">return</span> <span class="o">&amp;</span><span class="nx">Tree</span><span class="p">{</span><span class="nx">root</span><span class="p">:</span> <span class="o">&amp;</span><span class="nx">node</span><span class="p">{</span>
-        <span class="nx">val</span><span class="p">:</span>      <span class="s">&#34;root&#34;</span><span class="p">,</span>
+        <span class="nx">val</span><span class="p">:</span>      <span class="s">&#34;TreeRoot&#34;</span><span class="p">,</span>
         <span class="nx">prefix</span><span class="p">:</span>   <span class="kc">nil</span><span class="p">,</span>
         <span class="nx">suffixes</span><span class="p">:</span> <span class="nx">edges</span><span class="p">{},</span>
     <span class="p">}}</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <span class="o">*</span><span class="nx">Tree</span><span class="p">)</span> <span class="nf">Get</span><span class="p">(</span><span class="nx">k</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="kd">interface</span><span class="p">{},</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">n</span> <span class="o">:=</span> <span class="nx">t</span><span class="p">.</span><span class="nx">root</span>
+    <span class="nx">path</span> <span class="o">:=</span> <span class="nx">k</span>
+    <span class="k">for</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nx">n</span><span class="p">.</span><span class="nx">val</span><span class="p">,</span> <span class="kc">true</span>
+            <span class="k">break</span>
+        <span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">        <span class="nx">e</span> <span class="o">:=</span> <span class="nx">n</span><span class="p">.</span><span class="nf">getEdge</span><span class="p">(</span><span class="nx">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">e</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="k">break</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">e</span><span class="p">.</span><span class="nx">name</span> <span class="o">==</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+            <span class="k">break</span>
+        <span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">        <span class="k">if</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">HasPrefix</span><span class="p">(</span><span class="nx">path</span><span class="p">,</span> <span class="nx">e</span><span class="p">.</span><span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">path</span> <span class="p">=</span> <span class="nx">path</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="nx">e</span><span class="p">.</span><span class="nx">name</span><span class="p">):]</span>
+            <span class="nx">n</span> <span class="p">=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">end</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="k">break</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">false</span>
 <span class="p">}</span>
 </pre>
           </td>
@@ -176,23 +249,28 @@
         
         <tr>
           <td class="docs">
-            <p>Look for the edge</p>
-
+            
           </td>
           <td class="code leading">
             
           <pre class="chroma">    <span class="k">for</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+            <span class="nx">n</span><span class="p">.</span><span class="nx">val</span> <span class="p">=</span> <span class="nx">v</span>
+            <span class="k">return</span> <span class="kc">true</span>
+        <span class="p">}</span>
 </pre>
           </td>
         </tr>
         
         <tr>
           <td class="docs">
-            
+            <p>Look for the edge</p>
+
           </td>
           <td class="code leading">
             
-          <pre class="chroma">        <span class="nx">parent</span> <span class="p">=</span> <span class="nx">n</span>
+          <pre class="chroma">
+        <span class="nx">parent</span> <span class="p">=</span> <span class="nx">n</span>
         <span class="nx">e</span> <span class="o">:=</span> <span class="nx">n</span><span class="p">.</span><span class="nf">getEdge</span><span class="p">(</span><span class="nx">path</span><span class="p">)</span>
 </pre>
           </td>
@@ -310,10 +388,14 @@ Create common edge</p>
           <td class="code leading">
             
           <pre class="chroma">
-        <span class="nx">freshEdge</span> <span class="o">:=</span> <span class="nf">newNodeEdge</span><span class="p">()</span>
-        <span class="nx">freshEdge</span><span class="p">.</span><span class="nx">name</span> <span class="p">=</span> <span class="nx">path</span><span class="p">[</span><span class="nx">commonPrefix</span><span class="p">:]</span>
-        <span class="nx">freshEdge</span><span class="p">.</span><span class="nx">start</span> <span class="p">=</span> <span class="nx">commonEdge</span><span class="p">.</span><span class="nx">end</span>
-        <span class="nx">freshEdge</span><span class="p">.</span><span class="nx">end</span><span class="p">.</span><span class="nx">val</span> <span class="p">=</span> <span class="nx">v</span>
+        <span class="nx">freshEdgeName</span> <span class="o">:=</span> <span class="nx">path</span><span class="p">[</span><span class="nx">commonPrefix</span><span class="p">:]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">freshEdgeName</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+            <span class="nx">commonEdge</span><span class="p">.</span><span class="nx">end</span><span class="p">.</span><span class="nx">val</span> <span class="p">=</span> <span class="nx">v</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="nx">freshEdge</span> <span class="o">:=</span> <span class="nf">newNodeEdge</span><span class="p">()</span>
+            <span class="nx">freshEdge</span><span class="p">.</span><span class="nx">name</span> <span class="p">=</span> <span class="nx">freshEdgeName</span>
+            <span class="nx">freshEdge</span><span class="p">.</span><span class="nx">start</span> <span class="p">=</span> <span class="nx">commonEdge</span><span class="p">.</span><span class="nx">end</span>
+            <span class="nx">freshEdge</span><span class="p">.</span><span class="nx">end</span><span class="p">.</span><span class="nx">val</span> <span class="p">=</span> <span class="nx">v</span>
 </pre>
           </td>
         </tr>
@@ -324,7 +406,8 @@ Create common edge</p>
           </td>
           <td class="code leading">
             
-          <pre class="chroma">        <span class="nx">commonEdge</span><span class="p">.</span><span class="nx">end</span><span class="p">.</span><span class="nf">addEdge</span><span class="p">(</span><span class="nx">freshEdge</span><span class="p">)</span>
+          <pre class="chroma">            <span class="nx">commonEdge</span><span class="p">.</span><span class="nx">end</span><span class="p">.</span><span class="nf">addEdge</span><span class="p">(</span><span class="nx">freshEdge</span><span class="p">)</span>
+        <span class="p">}</span>
         <span class="k">return</span> <span class="kc">true</span>
     <span class="p">}</span>
 </pre>
@@ -551,11 +634,14 @@ of two strings</p>
           <td class="code leading">
             
           <pre class="chroma">
-<span class="go">node: prefix , value root
+<span class="go">node: prefix , value TreeRoot
+</span><span class="go">node: prefix /, value root
 </span><span class="go">node: prefix /content/, value %!s(&lt;nil&gt;)
 </span><span class="go">node: prefix a.md, value aaa
 </span><span class="go">node: prefix b.md, value bbb
-</span><span class="go">node: prefix c.md, value ccc</span></pre>
+</span><span class="go">node: prefix c.md, value ccc
+</span><span class="go">=--=
+</span><span class="go">root</span></pre>
           </td>
         </tr>
         
@@ -572,6 +658,10 @@ of two strings</p>
       </table>
       
       
+      <p class="next">
+        Next example: <a href="pathspec">PathSpec</a>.
+      </p>
+      
 
     <p class="footer">
       by <a href="https://sunwei.xyz">孙伟</a>
@@ -584,7 +674,7 @@ of two strings</p>
     </div>
     <script>
       var codeLines = [];
-      codeLines.push('package main\u000A');codeLines.push('import (\u000A    \"fmt\"\u000A    \"sort\"\u000A)\u000A');codeLines.push('func main() {\u000A    t :\u003D New()\u000A    type kv struct {\u000A        k string\u000A        v string\u000A    }\u000A    kvs :\u003D []kv{\u000A        {\"/content/a.md\", \"aaa\"},\u000A        {\"/content/b.md\", \"bbb\"},\u000A        {\"/content/c.md\", \"ccc\"},\u000A    }\u000A    for _, kv :\u003D range kvs {\u000A        t.Insert(kv.k, kv.v)\u000A    }\u000A    t.Print()\u000A}\u000A');codeLines.push('type edge struct {\u000A    name  string\u000A    start *node\u000A    end   *node\u000A}\u000A');codeLines.push('type edges []*edge\u000A');codeLines.push('type node struct {\u000A    val      any\u000A    prefix   *edge\u000A    suffixes edges\u000A}\u000A');codeLines.push('type Tree struct {\u000A    root *node\u000A}\u000A');codeLines.push('func New() *Tree {\u000A    return \u0026Tree{root: \u0026node{\u000A        val:      \"root\",\u000A        prefix:   nil,\u000A        suffixes: edges{},\u000A    }}\u000A}\u000A');codeLines.push('func (t *Tree) Insert(k string, v interface{}) bool {\u000A    var parent *node\u000A    n :\u003D t.root\u000A    path :\u003D k\u000A');codeLines.push('    if len(path) \u003D\u003D 0 {\u000A        panic(\"empty key not supported yet.\")\u000A    }\u000A');codeLines.push('    for {\u000A');codeLines.push('        parent \u003D n\u000A        e :\u003D n.getEdge(path)\u000A');codeLines.push('        if e \u003D\u003D nil {\u000A            e :\u003D newNodeEdge()\u000A            e.name \u003D path\u000A            e.start \u003D parent\u000A            e.end.val \u003D v\u000A');codeLines.push('            parent.addEdge(e)\u000A            return true\u000A        }\u000A');codeLines.push('        commonPrefix :\u003D longestPrefix(path, e.name)\u000A');codeLines.push('        if commonPrefix \u003D\u003D len(e.name) {\u000A            path \u003D path[commonPrefix:]\u000A            n \u003D e.end\u000A            continue\u000A        }\u000A');codeLines.push('        commonEdge :\u003D newNodeEdge()\u000A        commonEdge.name \u003D path[:commonPrefix]\u000A        commonEdge.start \u003D e.start\u000A');codeLines.push('        e.start.addEdge(commonEdge)\u000A        e.start.delEdge(e)\u000A        commonEdge.end.addEdge(e)\u000A');codeLines.push('        e.name \u003D e.name[commonPrefix:]\u000A');codeLines.push('        freshEdge :\u003D newNodeEdge()\u000A        freshEdge.name \u003D path[commonPrefix:]\u000A        freshEdge.start \u003D commonEdge.end\u000A        freshEdge.end.val \u003D v\u000A');codeLines.push('        commonEdge.end.addEdge(freshEdge)\u000A        return true\u000A    }\u000A');codeLines.push('    return false\u000A}\u000A');codeLines.push('func newNodeEdge() *edge {\u000A    e :\u003D \u0026edge{\u000A        name:  \"\",\u000A        start: nil,\u000A        end: \u0026node{\u000A            val:      nil,\u000A            prefix:   nil,\u000A            suffixes: edges{},\u000A        },\u000A    }\u000A    e.end.prefix \u003D e\u000A    return e\u000A}\u000A');codeLines.push('func (n *node) getEdge(path string) *edge {\u000A    return findEdgeWithSamePrefix(\u000A        getFirstByte(path), n.suffixes)\u000A}\u000A');codeLines.push('func (n *node) addEdge(e *edge) {\u000A    e.start \u003D n\u000A    n.suffixes \u003D append(n.suffixes, e)\u000A    sortAscending(n.suffixes)\u000A}\u000A');codeLines.push('func (n *node) delEdge(e *edge) {\u000A    if e.start \u003D\u003D n {\u000A        var pos int\u000A        for i, item :\u003D range n.suffixes {\u000A            if item \u003D\u003D e {\u000A                pos \u003D i\u000A                break\u000A            }\u000A        }\u000A        n.suffixes \u003D append(n.suffixes[:pos],\u000A            n.suffixes[pos+1:]...)\u000A    }\u000A}\u000A');codeLines.push('func sortAscending(es edges) {\u000A    sort.Slice(es, func(i, j int) bool {\u000A        return getFirstByte(\u000A            es[i].name) \u003C getFirstByte(es[j].name)\u000A    })\u000A}\u000A');codeLines.push('func getFirstByte(v string) byte {\u000A    return v[0]\u000A}\u000A');codeLines.push('func findEdgeWithSamePrefix(\u000A    firstByte byte, es edges) *edge {\u000A    for _, e :\u003D range es {\u000A        if getFirstByte(e.name) \u003D\u003D firstByte {\u000A            return e\u000A        }\u000A    }\u000A    return nil\u000A}\u000A');codeLines.push('func longestPrefix(k1, k2 string) int {\u000A    max :\u003D len(k1)\u000A    if l :\u003D len(k2); l \u003C max {\u000A        max \u003D l\u000A    }\u000A    var i int\u000A    for i \u003D 0; i \u003C max; i++ {\u000A        if k1[i] !\u003D k2[i] {\u000A            break\u000A        }\u000A    }\u000A    return i\u000A}\u000A');codeLines.push('func (t *Tree) Print() {\u000A    recursivePrint(t.root)\u000A}\u000A');codeLines.push('func recursivePrint(n *node) {\u000A    printNode(n)\u000A    for _, e :\u003D range n.suffixes {\u000A        recursivePrint(e.end)\u000A    }\u000A}\u000A');codeLines.push('func printNode(n *node) {\u000A    prefix :\u003D \"\"\u000A    if n.prefix !\u003D nil {\u000A        prefix \u003D n.prefix.name\u000A    }\u000A    fmt.Printf(\"node: prefix %s, value %s\\n\",\u000A        prefix, n.val)\u000A}\u000A');codeLines.push('');codeLines.push('');
+      codeLines.push('package main\u000A');codeLines.push('import (\u000A    \"fmt\"\u000A    \"sort\"\u000A    \"strings\"\u000A)\u000A');codeLines.push('func main() {\u000A    t :\u003D New()\u000A    type kv struct {\u000A        k string\u000A        v string\u000A    }\u000A    kvs :\u003D []kv{\u000A        {\"/content/a.md\", \"aaa\"},\u000A        {\"/content/a.md\", \"ddd\"},\u000A        {\"/content/b.md\", \"bbb\"},\u000A        {\"/content/c.md\", \"ccc\"},\u000A        {\"/\", \"root\"},\u000A    }\u000A    for _, kv :\u003D range kvs {\u000A        t.Insert(kv.k, kv.v)\u000A    }\u000A    t.Print()\u000A');codeLines.push('    v, _ :\u003D t.Get(\"/\")\u000A    fmt.Println(\"\u003D--\u003D\")\u000A    fmt.Println(v)\u000A}\u000A');codeLines.push('type edge struct {\u000A    name  string\u000A    start *node\u000A    end   *node\u000A}\u000A');codeLines.push('type edges []*edge\u000A');codeLines.push('type node struct {\u000A    val      any\u000A    prefix   *edge\u000A    suffixes edges\u000A}\u000A');codeLines.push('type Tree struct {\u000A    root *node\u000A}\u000A');codeLines.push('func New() *Tree {\u000A    return \u0026Tree{root: \u0026node{\u000A        val:      \"TreeRoot\",\u000A        prefix:   nil,\u000A        suffixes: edges{},\u000A    }}\u000A}\u000A');codeLines.push('func (t *Tree) Get(k string) (interface{}, bool) {\u000A    n :\u003D t.root\u000A    path :\u003D k\u000A    for {\u000A        if len(path) \u003D\u003D 0 {\u000A            return n.val, true\u000A            break\u000A        }\u000A');codeLines.push('        e :\u003D n.getEdge(path)\u000A        if e \u003D\u003D nil {\u000A            break\u000A        } else if e.name \u003D\u003D \"\" {\u000A            break\u000A        }\u000A');codeLines.push('        if strings.HasPrefix(path, e.name) {\u000A            path \u003D path[len(e.name):]\u000A            n \u003D e.end\u000A        } else {\u000A            break\u000A        }\u000A    }\u000A    return nil, false\u000A}\u000A');codeLines.push('func (t *Tree) Insert(k string, v interface{}) bool {\u000A    var parent *node\u000A    n :\u003D t.root\u000A    path :\u003D k\u000A');codeLines.push('    if len(path) \u003D\u003D 0 {\u000A        panic(\"empty key not supported yet.\")\u000A    }\u000A');codeLines.push('    for {\u000A        if len(path) \u003D\u003D 0 {\u000A            n.val \u003D v\u000A            return true\u000A        }\u000A');codeLines.push('        parent \u003D n\u000A        e :\u003D n.getEdge(path)\u000A');codeLines.push('        if e \u003D\u003D nil {\u000A            e :\u003D newNodeEdge()\u000A            e.name \u003D path\u000A            e.start \u003D parent\u000A            e.end.val \u003D v\u000A');codeLines.push('            parent.addEdge(e)\u000A            return true\u000A        }\u000A');codeLines.push('        commonPrefix :\u003D longestPrefix(path, e.name)\u000A');codeLines.push('        if commonPrefix \u003D\u003D len(e.name) {\u000A            path \u003D path[commonPrefix:]\u000A            n \u003D e.end\u000A            continue\u000A        }\u000A');codeLines.push('        commonEdge :\u003D newNodeEdge()\u000A        commonEdge.name \u003D path[:commonPrefix]\u000A        commonEdge.start \u003D e.start\u000A');codeLines.push('        e.start.addEdge(commonEdge)\u000A        e.start.delEdge(e)\u000A        commonEdge.end.addEdge(e)\u000A');codeLines.push('        e.name \u003D e.name[commonPrefix:]\u000A');codeLines.push('        freshEdgeName :\u003D path[commonPrefix:]\u000A        if len(freshEdgeName) \u003D\u003D 0 {\u000A            commonEdge.end.val \u003D v\u000A        } else {\u000A            freshEdge :\u003D newNodeEdge()\u000A            freshEdge.name \u003D freshEdgeName\u000A            freshEdge.start \u003D commonEdge.end\u000A            freshEdge.end.val \u003D v\u000A');codeLines.push('            commonEdge.end.addEdge(freshEdge)\u000A        }\u000A        return true\u000A    }\u000A');codeLines.push('    return false\u000A}\u000A');codeLines.push('func newNodeEdge() *edge {\u000A    e :\u003D \u0026edge{\u000A        name:  \"\",\u000A        start: nil,\u000A        end: \u0026node{\u000A            val:      nil,\u000A            prefix:   nil,\u000A            suffixes: edges{},\u000A        },\u000A    }\u000A    e.end.prefix \u003D e\u000A    return e\u000A}\u000A');codeLines.push('func (n *node) getEdge(path string) *edge {\u000A    return findEdgeWithSamePrefix(\u000A        getFirstByte(path), n.suffixes)\u000A}\u000A');codeLines.push('func (n *node) addEdge(e *edge) {\u000A    e.start \u003D n\u000A    n.suffixes \u003D append(n.suffixes, e)\u000A    sortAscending(n.suffixes)\u000A}\u000A');codeLines.push('func (n *node) delEdge(e *edge) {\u000A    if e.start \u003D\u003D n {\u000A        var pos int\u000A        for i, item :\u003D range n.suffixes {\u000A            if item \u003D\u003D e {\u000A                pos \u003D i\u000A                break\u000A            }\u000A        }\u000A        n.suffixes \u003D append(n.suffixes[:pos],\u000A            n.suffixes[pos+1:]...)\u000A    }\u000A}\u000A');codeLines.push('func sortAscending(es edges) {\u000A    sort.Slice(es, func(i, j int) bool {\u000A        return getFirstByte(\u000A            es[i].name) \u003C getFirstByte(es[j].name)\u000A    })\u000A}\u000A');codeLines.push('func getFirstByte(v string) byte {\u000A    return v[0]\u000A}\u000A');codeLines.push('func findEdgeWithSamePrefix(\u000A    firstByte byte, es edges) *edge {\u000A    for _, e :\u003D range es {\u000A        if getFirstByte(e.name) \u003D\u003D firstByte {\u000A            return e\u000A        }\u000A    }\u000A    return nil\u000A}\u000A');codeLines.push('func longestPrefix(k1, k2 string) int {\u000A    max :\u003D len(k1)\u000A    if l :\u003D len(k2); l \u003C max {\u000A        max \u003D l\u000A    }\u000A    var i int\u000A    for i \u003D 0; i \u003C max; i++ {\u000A        if k1[i] !\u003D k2[i] {\u000A            break\u000A        }\u000A    }\u000A    return i\u000A}\u000A');codeLines.push('func (t *Tree) Print() {\u000A    recursivePrint(t.root)\u000A}\u000A');codeLines.push('func recursivePrint(n *node) {\u000A    printNode(n)\u000A    for _, e :\u003D range n.suffixes {\u000A        recursivePrint(e.end)\u000A    }\u000A}\u000A');codeLines.push('func printNode(n *node) {\u000A    prefix :\u003D \"\"\u000A    if n.prefix !\u003D nil {\u000A        prefix \u003D n.prefix.name\u000A    }\u000A    fmt.Printf(\"node: prefix %s, value %s\\n\",\u000A        prefix, n.val)\u000A}\u000A');codeLines.push('');codeLines.push('');
     </script>
     <script src="site.js" async></script>
   </body>
