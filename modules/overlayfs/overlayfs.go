@@ -1,4 +1,4 @@
-package main
+package overlayfs
 
 import (
 	"bytes"
@@ -114,8 +114,7 @@ func New(fss []AbsStatFss) *OverlayFs {
 	}
 }
 
-func (ofs OverlayFs) Append(
-	fss ...AbsStatFss) *OverlayFs {
+func (ofs OverlayFs) Append(fss ...AbsStatFss) *OverlayFs {
 	ofs.fss = append(ofs.fss, fss...)
 	return &ofs
 }
@@ -136,14 +135,12 @@ func (ofs *OverlayFs) Open(name string) (fs.File, error) {
 	return bfs.Open(name)
 }
 
-func (ofs *OverlayFs) Stat(
-	name string) (os.FileInfo, error) {
+func (ofs *OverlayFs) Stat(name string) (os.FileInfo, error) {
 	_, fi, err := ofs.stat(name)
 	return fi, err
 }
 
-func (ofs *OverlayFs) stat(
-	name string) (fs.StatFS, os.FileInfo, error) {
+func (ofs *OverlayFs) stat(name string) (fs.StatFS, os.FileInfo, error) {
 	for _, bfs := range ofs.fss {
 		fss := bfs.Fss()
 		for _, sfs := range fss {
@@ -161,8 +158,7 @@ func readFile(f fs.File) string {
 	return string(b)
 }
 
-func (ofs *OverlayFs) ReadDir(
-	dirname string) ([]fs.FileInfo, error) {
+func (ofs *OverlayFs) ReadDir(dirname string) ([]fs.FileInfo, error) {
 	var fis []fs.FileInfo
 	readDir := func(bfs AbsStatFss) error {
 		dirs := bfs.Abs(dirname)
