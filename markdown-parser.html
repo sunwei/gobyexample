@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>深入理解Hugo: Markdown Parser</title>
+    <link rel=stylesheet href="site.css">
+  </head>
+  <script>
+      onkeydown = (e) => {
+          
+          if (e.key == "ArrowLeft") {
+              window.location.href = 'pathspec';
+          }
+          
+          
+      }
+  </script>
+  <body>
+    <div class="example" id="markdown-parser">
+      <h2><a href="./">深入理解Hugo</a>: Markdown Parser</h2>
+      
+      <table>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            <a href="https://go.dev/play/p/bZihT1cEJW8"><img title="Run code" src="play.png" class="run" /></a><img title="Copy code" src="clipboard.png" class="copy" />
+          <pre class="chroma"><span class="kn">package</span> <span class="nx">main</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kn">import</span> <span class="p">(</span>
+    <span class="s">&#34;fmt&#34;</span>
+    <span class="s">&#34;github.com/sunwei/gobyexample/modules/markdown/parser&#34;</span>
+<span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">r</span> <span class="p">=</span> <span class="nf">newReader</span><span class="p">()</span>
+    <span class="nx">d</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">parser</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">lines</span><span class="p">)</span>
+    <span class="nx">d</span><span class="p">.</span><span class="nf">Walk</span><span class="p">(</span><span class="kd">func</span><span class="p">(</span><span class="nx">v</span> <span class="nx">any</span><span class="p">,</span>
+        <span class="nx">ws</span> <span class="nx">parser</span><span class="p">.</span><span class="nx">WalkState</span><span class="p">)</span> <span class="nx">parser</span><span class="p">.</span><span class="nx">WalkStatus</span> <span class="p">{</span>
+        <span class="nx">b</span> <span class="o">:=</span> <span class="nx">v</span><span class="p">.(</span><span class="nx">parser</span><span class="p">.</span><span class="nx">Block</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">ws</span> <span class="o">==</span> <span class="nx">parser</span><span class="p">.</span><span class="nx">WalkIn</span> <span class="p">{</span>
+            <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;Walk in: &#34;</span><span class="p">)</span>
+            <span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;%s\n&#34;</span><span class="p">,</span> <span class="nx">b</span><span class="p">)</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;Walk out.&#34;</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="nx">parser</span><span class="p">.</span><span class="nx">WalkContinue</span>
+    <span class="p">})</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">line</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">raw</span>       <span class="kt">string</span>
+    <span class="nx">startChar</span> <span class="kt">string</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">l</span> <span class="o">*</span><span class="nx">line</span><span class="p">)</span> <span class="nf">Raw</span><span class="p">()</span> <span class="kt">string</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">l</span><span class="p">.</span><span class="nx">raw</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">l</span> <span class="o">*</span><span class="nx">line</span><span class="p">)</span> <span class="nf">StartChar</span><span class="p">()</span> <span class="kt">string</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">l</span><span class="p">.</span><span class="nx">startChar</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">reader</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">lines</span> <span class="p">[]</span><span class="nx">parser</span><span class="p">.</span><span class="nx">Line</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">newReader</span><span class="p">()</span> <span class="o">*</span><span class="nx">reader</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="o">&amp;</span><span class="nx">reader</span><span class="p">{</span><span class="nx">lines</span><span class="p">:</span> <span class="p">[]</span><span class="nx">parser</span><span class="p">.</span><span class="nx">Line</span><span class="p">{</span>
+        <span class="o">&amp;</span><span class="nx">line</span><span class="p">{</span><span class="nx">raw</span><span class="p">:</span> <span class="s">&#34;### first blog\n&#34;</span><span class="p">,</span> <span class="nx">startChar</span><span class="p">:</span> <span class="s">&#34;#&#34;</span><span class="p">},</span>
+        <span class="o">&amp;</span><span class="nx">line</span><span class="p">{</span><span class="nx">raw</span><span class="p">:</span> <span class="s">&#34;Hello Blog\n&#34;</span><span class="p">,</span> <span class="nx">startChar</span><span class="p">:</span> <span class="s">&#34;H&#34;</span><span class="p">},</span>
+    <span class="p">}}</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+      </table>
+      
+      <table>
+        
+        <tr>
+          <td class="docs">
+            <p>Walk result
+Start from root</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="go">Walk in:
+</span><span class="go">&amp;{%!s(parser.BlockState=2) &lt;nil&gt; []}</span></pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>In first child</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="go">Walk in:
+</span><span class="go">&amp;{{%!s(parser.BlockState=2)
+</span><span class="go">%!s(*parser.heading=&amp;{})
+</span><span class="go">[%!s(*parser.headLine=&amp;{first blog})]}
+</span><span class="go">%!s(int=3)}
+</span><span class="go">Walk out.</span></pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>In second child</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="go">Walk in:
+</span><span class="go">&amp;{%!s(parser.BlockState=2)
+</span><span class="go">%!s(*parser.paragraph=&amp;{})
+</span><span class="go">[%!s(*main.line=&amp;{Hello Blog
+</span><span class="go"> H})]}
+</span><span class="go">Walk out.</span></pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>Out root</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="go">Walk out.</span></pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code">
+            
+          <pre class="chroma"><span class="go">Program exited.</span></pre>
+          </td>
+        </tr>
+        
+      </table>
+      
+      
+
+    <p class="footer">
+      by <a href="https://sunwei.xyz">孙伟</a>
+      | <a href="https://github.com/sunwei/gobyexample">source</a>
+      | <a href="https://github.com/sunwei/gobyexample#license">license</a>
+      | Inspired by <a href="https://github.com/mmcgrana/gobyexample">gobyexample.com</a>
+      | Build with LOVE 💞
+    </p>
+
+    </div>
+    <script>
+      var codeLines = [];
+      codeLines.push('package main\u000A');codeLines.push('import (\u000A    \"fmt\"\u000A    \"github.com/sunwei/gobyexample/modules/markdown/parser\"\u000A)\u000A');codeLines.push('func main() {\u000A    var r \u003D newReader()\u000A    d, _ :\u003D parser.Parse(r.lines)\u000A    d.Walk(func(v any,\u000A        ws parser.WalkState) parser.WalkStatus {\u000A        b :\u003D v.(parser.Block)\u000A        if ws \u003D\u003D parser.WalkIn {\u000A            fmt.Println(\"Walk in: \")\u000A            fmt.Printf(\"%s\\n\", b)\u000A        } else {\u000A            fmt.Println(\"Walk out.\")\u000A        }\u000A        return parser.WalkContinue\u000A    })\u000A}\u000A');codeLines.push('type line struct {\u000A    raw       string\u000A    startChar string\u000A}\u000A');codeLines.push('func (l *line) Raw() string {\u000A    return l.raw\u000A}\u000A');codeLines.push('func (l *line) StartChar() string {\u000A    return l.startChar\u000A}\u000A');codeLines.push('type reader struct {\u000A    lines []parser.Line\u000A}\u000A');codeLines.push('func newReader() *reader {\u000A    return \u0026reader{lines: []parser.Line{\u000A        \u0026line{raw: \"### first blog\\n\", startChar: \"#\"},\u000A        \u0026line{raw: \"Hello Blog\\n\", startChar: \"H\"},\u000A    }}\u000A}\u000A');codeLines.push('');codeLines.push('');codeLines.push('');codeLines.push('');codeLines.push('');
+    </script>
+    <script src="site.js" async></script>
+  </body>
+</html>
