@@ -8,9 +8,15 @@ import (
 func main() {
 	var r = newReader()
 	d, _ := parser.Parse(r.lines)
-	d.Walk(func(v any, ws parser.WalkState) parser.WalkStatus {
+	d.Walk(func(v any,
+		ws parser.WalkState) parser.WalkStatus {
 		b := v.(parser.Block)
-		fmt.Println(b.IsOpen())
+		if ws == parser.WalkIn {
+			fmt.Println("Walk in: ")
+			fmt.Printf("%s\n", b)
+		} else {
+			fmt.Println("Walk out.")
+		}
 		return parser.WalkContinue
 	})
 }
