@@ -7,10 +7,12 @@ import (
 )
 
 func main() {
+	// initial fsm with init state and data
 	f := fsm.New(firstState, &data{
 		err: nil,
 		raw: "first",
 	})
+	// add state with handler
 	f.Add(firstState,
 		func(event fsm.Event) (fsm.State, fsm.Data) {
 			if event.Type() == fsm.Action {
@@ -31,12 +33,15 @@ func main() {
 				raw: "last",
 			}
 		})
+	// error occurs
 	f.Add(lastState,
 		func(event fsm.Event) (fsm.State, fsm.Data) {
 			if e := event.Data().Error(); e != nil {
 				fmt.Println(e)
 				return errorState, nil
 			}
+			// if there is no error
+			// quite with eof state
 			return eofState, &data{
 				err: nil,
 				raw: "",
@@ -44,11 +49,14 @@ func main() {
 		})
 
 	for {
+		// send message to notify fsm start the processing
 		e := f.Process("continue")
+		// quit with error
 		if e != nil {
 			fmt.Println("break because of error")
 			break
 		}
+		// quite for eof state
 		if f.State() == eofState {
 			fmt.Println("eof")
 			break

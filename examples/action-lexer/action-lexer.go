@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+	// Action example
 	lex, err := action.New(
 		"<p><!-- HTML comment -->abc</p>\n{{.Content}}")
 	if err != nil {
@@ -16,13 +17,16 @@ func main() {
 
 	var tokens []lexer.Token
 	for {
+		// lexer iterate
 		token := lex.Next()
 		tokens = append(tokens, token)
+		// reach end, analyzing done
 		if token.Type() == action.TokenEOF {
 			break
 		}
 	}
 
+	// output tokens detail
 	for i, t := range tokens {
 		fmt.Println(i + 1)
 		fmt.Println(t.Value())
