@@ -1,17 +1,18 @@
 package action
 
 import (
+	"errors"
 	"fmt"
 	"github.com/sunwei/gobyexample/modules/fsm"
 	"github.com/sunwei/gobyexample/modules/lexer"
 )
 
 const (
-	tokenEOF lexer.TokenType = iota
-	tokenLeftDelim
-	tokenRightDelim
-	tokenText
-	tokenField
+	TokenEOF lexer.TokenType = iota
+	TokenLeftDelim
+	TokenRightDelim
+	TokenText
+	TokenField
 )
 
 type token struct {
@@ -41,7 +42,11 @@ type lex struct {
 	fsm   fsm.FSM
 }
 
-func New(input string) lexer.Lexer {
+func New(input string) (lexer.Lexer, error) {
+	if len(input) == 0 {
+		return nil, errors.New("input is empty")
+	}
+
 	f := fsm.New(textState, &data{
 		err: nil,
 		raw: input,
@@ -58,7 +63,7 @@ func New(input string) lexer.Lexer {
 	initFSM(l)
 	go l.run()
 
-	return l
+	return l, nil
 }
 
 func (l *lex) Next() lexer.Token {
@@ -67,6 +72,10 @@ func (l *lex) Next() lexer.Token {
 
 func (l *lex) run() {
 	for {
+		if l.fsm.State() == eofState {
+			fmt.Println("EOF State")
+			break
+		}
 		e := l.fsm.Process("continue")
 		if e != nil {
 			fmt.Println("break because of error")

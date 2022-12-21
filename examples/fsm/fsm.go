@@ -34,9 +34,9 @@ func main() {
 			fmt.Println(e)
 			return errorState, nil
 		}
-		return secondState, &data{
-			err: errors.New("something wrong"),
-			raw: "last",
+		return eofState, &data{
+			err: nil,
+			raw: "",
 		}
 	})
 
@@ -44,6 +44,10 @@ func main() {
 		e := f.Process("continue")
 		if e != nil {
 			fmt.Println("break because of error")
+			break
+		}
+		if f.State() == eofState {
+			fmt.Println("eof")
 			break
 		}
 	}
@@ -54,6 +58,7 @@ const (
 	secondState = "second"
 	lastState   = "last"
 	errorState  = "error"
+	eofState    = "eof"
 )
 
 type data struct {
