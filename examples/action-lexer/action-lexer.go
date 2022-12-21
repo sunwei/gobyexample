@@ -7,7 +7,8 @@ import (
 )
 
 func main() {
-	lex, err := action.New("<p><!-- HTML comment -->abc</p>\n{{.Content}}")
+	lex, err := action.New(
+		"<p><!-- HTML comment -->abc</p>\n{{.Content}}")
 	if err != nil {
 		fmt.Println(err)
 		return
