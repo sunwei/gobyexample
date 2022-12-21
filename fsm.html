@@ -30,7 +30,7 @@
             
           </td>
           <td class="code leading">
-            <a href="https://go.dev/play/p/B4VCAAGi2Dh"><img title="Run code" src="play.png" class="run" /></a><img title="Copy code" src="clipboard.png" class="copy" />
+            <a href="https://go.dev/play/p/hu3_ZxvyBq6"><img title="Run code" src="play.png" class="run" /></a><img title="Copy code" src="clipboard.png" class="copy" />
           <pre class="chroma"><span class="kn">package</span> <span class="nx">main</span>
 </pre>
           </td>
@@ -53,16 +53,39 @@
         
         <tr>
           <td class="docs">
-            
+            <p>initial fsm with init state and data</p>
+
           </td>
           <td class="code leading">
             
           <pre class="chroma"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="nx">f</span> <span class="o">:=</span> <span class="nx">fsm</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="nx">firstState</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">data</span><span class="p">{</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>add state with handler</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">f</span> <span class="o">:=</span> <span class="nx">fsm</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="nx">firstState</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">data</span><span class="p">{</span>
         <span class="nx">err</span><span class="p">:</span> <span class="kc">nil</span><span class="p">,</span>
         <span class="nx">raw</span><span class="p">:</span> <span class="s">&#34;first&#34;</span><span class="p">,</span>
     <span class="p">})</span>
-    <span class="nx">f</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="nx">firstState</span><span class="p">,</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>error occurs</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">f</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="nx">firstState</span><span class="p">,</span>
         <span class="kd">func</span><span class="p">(</span><span class="nx">event</span> <span class="nx">fsm</span><span class="p">.</span><span class="nx">Event</span><span class="p">)</span> <span class="p">(</span><span class="nx">fsm</span><span class="p">.</span><span class="nx">State</span><span class="p">,</span> <span class="nx">fsm</span><span class="p">.</span><span class="nx">Data</span><span class="p">)</span> <span class="p">{</span>
             <span class="k">if</span> <span class="nx">event</span><span class="p">.</span><span class="nf">Type</span><span class="p">()</span> <span class="o">==</span> <span class="nx">fsm</span><span class="p">.</span><span class="nx">Action</span> <span class="p">{</span>
                 <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nf">Data</span><span class="p">().</span><span class="nf">Raw</span><span class="p">())</span>
@@ -82,17 +105,24 @@
                 <span class="nx">raw</span><span class="p">:</span> <span class="s">&#34;last&#34;</span><span class="p">,</span>
             <span class="p">}</span>
         <span class="p">})</span>
-    <span class="nx">f</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="nx">lastState</span><span class="p">,</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>if there is no error
+quite with eof state</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">f</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="nx">lastState</span><span class="p">,</span>
         <span class="kd">func</span><span class="p">(</span><span class="nx">event</span> <span class="nx">fsm</span><span class="p">.</span><span class="nx">Event</span><span class="p">)</span> <span class="p">(</span><span class="nx">fsm</span><span class="p">.</span><span class="nx">State</span><span class="p">,</span> <span class="nx">fsm</span><span class="p">.</span><span class="nx">Data</span><span class="p">)</span> <span class="p">{</span>
             <span class="k">if</span> <span class="nx">e</span> <span class="o">:=</span> <span class="nx">event</span><span class="p">.</span><span class="nf">Data</span><span class="p">().</span><span class="nf">Error</span><span class="p">();</span> <span class="nx">e</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
                 <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span>
                 <span class="k">return</span> <span class="nx">errorState</span><span class="p">,</span> <span class="kc">nil</span>
             <span class="p">}</span>
-            <span class="k">return</span> <span class="nx">eofState</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">data</span><span class="p">{</span>
-                <span class="nx">err</span><span class="p">:</span> <span class="kc">nil</span><span class="p">,</span>
-                <span class="nx">raw</span><span class="p">:</span> <span class="s">&#34;&#34;</span><span class="p">,</span>
-            <span class="p">}</span>
-        <span class="p">})</span>
 </pre>
           </td>
         </tr>
@@ -103,13 +133,61 @@
           </td>
           <td class="code leading">
             
+          <pre class="chroma">            <span class="k">return</span> <span class="nx">eofState</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">data</span><span class="p">{</span>
+                <span class="nx">err</span><span class="p">:</span> <span class="kc">nil</span><span class="p">,</span>
+                <span class="nx">raw</span><span class="p">:</span> <span class="s">&#34;&#34;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">})</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>send message to notify fsm start the processing</p>
+
+          </td>
+          <td class="code leading">
+            
           <pre class="chroma">    <span class="k">for</span> <span class="p">{</span>
-        <span class="nx">e</span> <span class="o">:=</span> <span class="nx">f</span><span class="p">.</span><span class="nf">Process</span><span class="p">(</span><span class="s">&#34;continue&#34;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nx">e</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>quit with error</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">        <span class="nx">e</span> <span class="o">:=</span> <span class="nx">f</span><span class="p">.</span><span class="nf">Process</span><span class="p">(</span><span class="s">&#34;continue&#34;</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>quite for eof state</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">        <span class="k">if</span> <span class="nx">e</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
             <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;break because of error&#34;</span><span class="p">)</span>
             <span class="k">break</span>
         <span class="p">}</span>
-        <span class="k">if</span> <span class="nx">f</span><span class="p">.</span><span class="nf">State</span><span class="p">()</span> <span class="o">==</span> <span class="nx">eofState</span> <span class="p">{</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">        <span class="k">if</span> <span class="nx">f</span><span class="p">.</span><span class="nf">State</span><span class="p">()</span> <span class="o">==</span> <span class="nx">eofState</span> <span class="p">{</span>
             <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;eof&#34;</span><span class="p">)</span>
             <span class="k">break</span>
         <span class="p">}</span>
@@ -213,7 +291,7 @@
     </div>
     <script>
       var codeLines = [];
-      codeLines.push('package main\u000A');codeLines.push('import (\u000A    \"errors\"\u000A    \"fmt\"\u000A    \"github.com/sunwei/gobyexample/modules/fsm\"\u000A)\u000A');codeLines.push('func main() {\u000A    f :\u003D fsm.New(firstState, \u0026data{\u000A        err: nil,\u000A        raw: \"first\",\u000A    })\u000A    f.Add(firstState,\u000A        func(event fsm.Event) (fsm.State, fsm.Data) {\u000A            if event.Type() \u003D\u003D fsm.Action {\u000A                fmt.Println(event.Data().Raw())\u000A            }\u000A            return secondState, \u0026data{\u000A                err: nil,\u000A                raw: \"second\",\u000A            }\u000A        })\u000A    f.Add(secondState,\u000A        func(event fsm.Event) (fsm.State, fsm.Data) {\u000A            if event.Type() \u003D\u003D fsm.Action {\u000A                fmt.Println(event.Data().Raw())\u000A            }\u000A            return lastState, \u0026data{\u000A                err: errors.New(\"something wrong\"),\u000A                raw: \"last\",\u000A            }\u000A        })\u000A    f.Add(lastState,\u000A        func(event fsm.Event) (fsm.State, fsm.Data) {\u000A            if e :\u003D event.Data().Error(); e !\u003D nil {\u000A                fmt.Println(e)\u000A                return errorState, nil\u000A            }\u000A            return eofState, \u0026data{\u000A                err: nil,\u000A                raw: \"\",\u000A            }\u000A        })\u000A');codeLines.push('    for {\u000A        e :\u003D f.Process(\"continue\")\u000A        if e !\u003D nil {\u000A            fmt.Println(\"break because of error\")\u000A            break\u000A        }\u000A        if f.State() \u003D\u003D eofState {\u000A            fmt.Println(\"eof\")\u000A            break\u000A        }\u000A    }\u000A}\u000A');codeLines.push('const (\u000A    firstState  \u003D \"first\"\u000A    secondState \u003D \"second\"\u000A    lastState   \u003D \"last\"\u000A    errorState  \u003D \"error\"\u000A    eofState    \u003D \"eof\"\u000A)\u000A');codeLines.push('type data struct {\u000A    err error\u000A    raw any\u000A}\u000A');codeLines.push('func (d *data) Error() error {\u000A    return d.err\u000A}\u000Afunc (d *data) Raw() any {\u000A    return d.raw\u000A}\u000A');codeLines.push('');codeLines.push('');
+      codeLines.push('package main\u000A');codeLines.push('import (\u000A    \"errors\"\u000A    \"fmt\"\u000A    \"github.com/sunwei/gobyexample/modules/fsm\"\u000A)\u000A');codeLines.push('func main() {\u000A');codeLines.push('    f :\u003D fsm.New(firstState, \u0026data{\u000A        err: nil,\u000A        raw: \"first\",\u000A    })\u000A');codeLines.push('    f.Add(firstState,\u000A        func(event fsm.Event) (fsm.State, fsm.Data) {\u000A            if event.Type() \u003D\u003D fsm.Action {\u000A                fmt.Println(event.Data().Raw())\u000A            }\u000A            return secondState, \u0026data{\u000A                err: nil,\u000A                raw: \"second\",\u000A            }\u000A        })\u000A    f.Add(secondState,\u000A        func(event fsm.Event) (fsm.State, fsm.Data) {\u000A            if event.Type() \u003D\u003D fsm.Action {\u000A                fmt.Println(event.Data().Raw())\u000A            }\u000A            return lastState, \u0026data{\u000A                err: errors.New(\"something wrong\"),\u000A                raw: \"last\",\u000A            }\u000A        })\u000A');codeLines.push('    f.Add(lastState,\u000A        func(event fsm.Event) (fsm.State, fsm.Data) {\u000A            if e :\u003D event.Data().Error(); e !\u003D nil {\u000A                fmt.Println(e)\u000A                return errorState, nil\u000A            }\u000A');codeLines.push('            return eofState, \u0026data{\u000A                err: nil,\u000A                raw: \"\",\u000A            }\u000A        })\u000A');codeLines.push('    for {\u000A');codeLines.push('        e :\u003D f.Process(\"continue\")\u000A');codeLines.push('        if e !\u003D nil {\u000A            fmt.Println(\"break because of error\")\u000A            break\u000A        }\u000A');codeLines.push('        if f.State() \u003D\u003D eofState {\u000A            fmt.Println(\"eof\")\u000A            break\u000A        }\u000A    }\u000A}\u000A');codeLines.push('const (\u000A    firstState  \u003D \"first\"\u000A    secondState \u003D \"second\"\u000A    lastState   \u003D \"last\"\u000A    errorState  \u003D \"error\"\u000A    eofState    \u003D \"eof\"\u000A)\u000A');codeLines.push('type data struct {\u000A    err error\u000A    raw any\u000A}\u000A');codeLines.push('func (d *data) Error() error {\u000A    return d.err\u000A}\u000Afunc (d *data) Raw() any {\u000A    return d.raw\u000A}\u000A');codeLines.push('');codeLines.push('');
     </script>
     <script src="site.js" async></script>
   </body>
