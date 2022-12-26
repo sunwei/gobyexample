@@ -70,6 +70,20 @@ func (l *lex) Next() lexer.Token {
 	return <-l.token
 }
 
+func (l *lex) Tokens() lexer.Tokens {
+	var tokens []lexer.Token
+	for {
+		// lexer iterate
+		token := l.Next()
+		tokens = append(tokens, token)
+		// reach end, analyzing done
+		if token.Type() == TokenEOF {
+			break
+		}
+	}
+	return tokens
+}
+
 func (l *lex) run() {
 	for {
 		if l.fsm.State() == eofState {

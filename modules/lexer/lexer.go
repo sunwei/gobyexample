@@ -1,6 +1,7 @@
 package lexer
 
 type TokenType int
+type Tokens []Token
 
 type Token interface {
 	Type() TokenType
@@ -9,4 +10,5 @@ type Token interface {
 
 type Lexer interface {
 	Next() Token
+	Tokens() Tokens
 }
