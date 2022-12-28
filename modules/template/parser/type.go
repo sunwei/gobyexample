@@ -11,7 +11,6 @@ const (
 
 type Parser interface {
 	Parse(token lexer.Token) (Node, ParseState, error)
-	Matching(tokenType lexer.TokenType) bool
 }
 
 type Nodes []Node
@@ -25,12 +24,3 @@ type TreeNode interface {
 	AppendChild(node TreeNode)
 	Children() []TreeNode
 }
-
-type MatchingRule int
-
-const (
-	equal MatchingRule = 1 + iota
-	pair
-	inherent
-	separator
-)

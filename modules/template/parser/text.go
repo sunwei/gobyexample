@@ -19,21 +19,17 @@ func (t *textParser) Parse(token lexer.Token) (Node, ParseState, error) {
 	if token.Type() != t.matchingType {
 		return nil, done, errors.New("mismatch token type")
 	}
-	return &text{
+	return &textNode{
 		treeNode: &treeNode{},
 		value:    token.Value(),
 	}, done, nil
 }
 
-func (t *textParser) Matching(tokenType lexer.TokenType) bool {
-	return tokenType == t.matchingType
-}
-
-type text struct {
+type textNode struct {
 	*treeNode
 	value string
 }
 
-func (t *text) String() string {
-	return ""
+func (t *textNode) String() string {
+	return t.value
 }

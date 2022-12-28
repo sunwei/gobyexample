@@ -6,7 +6,15 @@ import (
 	"github.com/sunwei/gobyexample/modules/lexer/action"
 )
 
-func Parse(name string, text string) (*tree, error) {
+type Document struct {
+	*tree
+}
+
+func (d *Document) String() string {
+	return d.tree.String()
+}
+
+func Parse(name string, text string) (*Document, error) {
 	lex, err := action.New(text)
 	if err != nil {
 		fmt.Println(err)
@@ -24,10 +32,10 @@ func Parse(name string, text string) (*tree, error) {
 		return nil, err
 	}
 
-	return p.tree, err
+	return &Document{p.tree}, err
 }
 
-var rootParsers map[lexer.TokenType]Parser
+var rootParsers = map[lexer.TokenType]Parser{}
 
 func registerRootParsers(tokenType lexer.TokenType, p Parser) {
 	if _, ok := rootParsers[tokenType]; ok {
@@ -56,7 +64,7 @@ func (p *parser) parse() error {
 			break
 		}
 
-		// keep the same parser only after it's done
+		// keep the same parser, change only after it's done
 		if ps == done {
 			currentParser = getParser(token.Type())
 		}
@@ -66,7 +74,10 @@ func (p *parser) parse() error {
 			return err
 		}
 		ps = ps2
-		p.tree.root.AppendChild(n)
+
+		if ps == done && n != nil {
+			p.tree.root.AppendChild(n)
+		}
 	}
 
 	return nil

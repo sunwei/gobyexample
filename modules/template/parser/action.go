@@ -1,0 +1,92 @@
+package parser
+
+import (
+	"errors"
+	"github.com/sunwei/gobyexample/modules/lexer"
+	"github.com/sunwei/gobyexample/modules/lexer/action"
+	"sort"
+)
+
+func init() {
+	p := &actionParser{
+		matchingTypeLeft:  action.TokenLeftDelim,
+		matchingTypeRight: action.TokenRightDelim,
+		currentMatching:   action.TokenEOF,
+	}
+	registerRootParsers(p.matchingTypeLeft, p)
+	registerRootParsers(p.matchingTypeRight, p)
+}
+
+type actionParser struct {
+	matchingTypeLeft  lexer.TokenType
+	matchingTypeRight lexer.TokenType
+	currentMatching   lexer.TokenType
+	tokens            lexer.Tokens
+}
+
+func (p *actionParser) Parse(token lexer.Token) (Node, ParseState, error) {
+	if p.currentMatching == action.TokenEOF &&
+		(token.Type() != p.matchingTypeLeft && token.Type() != p.matchingTypeRight) {
+		return nil, done, errors.New("mismatch token type of actionParser")
+	}
+
+	if token.Type() == p.matchingTypeLeft {
+		p.currentMatching = p.matchingTypeLeft
+		return nil, open, nil
+	}
+	if token.Type() == p.matchingTypeRight {
+		an, err := newAction(p.tokens)
+		if err != nil {
+			return nil, done, err
+		}
+		return an, done, nil
+	}
+
+	p.tokens = append(p.tokens, token)
+	return nil, open, nil
+}
+
+func newAction(tokens lexer.Tokens) (*actionNode, error) {
+	a := &actionNode{
+		treeNode: &treeNode{},
+		pipeline: pipeline{
+			separator: action.TokenPipe,
+		},
+	}
+
+	var seps = []int{0, len(tokens)}
+	for i, t := range tokens {
+		if t.Type() == a.pipeline.separator {
+			seps = append(seps, i)
+		}
+	}
+	sort.Ints(seps[:])
+	for i := 1; i < len(seps); i++ {
+		c, err := newCommand(tokens[i-1 : i])
+		if err != nil {
+			return nil, err
+		}
+		a.AppendChild(c)
+	}
+
+	return a, nil
+}
+
+type pipeline struct {
+	separator lexer.TokenType
+}
+
+type actionNode struct {
+	*treeNode
+	pipeline
+}
+
+func (t *actionNode) String() string {
+	cs := t.Children()
+	s := ""
+	for _, n := range cs {
+		s += n.(*commandNode).String()
+		s += "\n"
+	}
+	return s
+}
