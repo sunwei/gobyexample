@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>深入理解Hugo: Template Parser</title>
+    <link rel=stylesheet href="site.css">
+  </head>
+  <script>
+      onkeydown = (e) => {
+          
+          if (e.key == "ArrowLeft") {
+              window.location.href = 'action-lexer';
+          }
+          
+          
+      }
+  </script>
+  <body>
+    <div class="example" id="template-parser">
+      <h2><a href="./">深入理解Hugo</a>: Template Parser</h2>
+      
+      <table>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            <a href="https://go.dev/play/p/sYv8LYFg6ie"><img title="Run code" src="play.png" class="run" /></a><img title="Copy code" src="clipboard.png" class="copy" />
+          <pre class="chroma"><span class="kn">package</span> <span class="nx">main</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kn">import</span> <span class="p">(</span>
+    <span class="s">&#34;fmt&#34;</span>
+    <span class="s">&#34;github.com/sunwei/gobyexample/modules/template/parser&#34;</span>
+<span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">d</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">parser</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="s">&#34;example&#34;</span><span class="p">,</span>
+        <span class="s">&#34;&lt;p&gt;&lt;!-- HTML comment --&gt;abc&lt;/p&gt;\n{{.Content}}&#34;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="p">}</span>
+    <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nf">String</span><span class="p">())</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+      </table>
+      
+      <table>
+        
+        <tr>
+          <td class="docs">
+            <p>output</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="go">EOF State
+</span><span class="go">&lt;p&gt;&lt;!-- HTML comment --&gt;abc&lt;/p&gt;
+</span><span class="go">.Content</span></pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code">
+            
+          <pre class="chroma"><span class="go">Program exited.</span></pre>
+          </td>
+        </tr>
+        
+      </table>
+      
+      
+
+    <p class="footer">
+      by <a href="https://sunwei.xyz">孙伟</a>
+      | <a href="https://github.com/sunwei/gobyexample">source</a>
+      | <a href="https://github.com/sunwei/gobyexample#license">license</a>
+      | Inspired by <a href="https://github.com/mmcgrana/gobyexample">gobyexample.com</a>
+      | Build with LOVE 💞
+    </p>
+
+    </div>
+    <script>
+      var codeLines = [];
+      codeLines.push('package main\u000A');codeLines.push('import (\u000A    \"fmt\"\u000A    \"github.com/sunwei/gobyexample/modules/template/parser\"\u000A)\u000A');codeLines.push('func main() {\u000A    d, err :\u003D parser.Parse(\"example\",\u000A        \"\u003Cp\u003E\u003C!-- HTML comment --\u003Eabc\u003C/p\u003E\\n{{.Content}}\")\u000A    if err !\u003D nil {\u000A        fmt.Println(err)\u000A        return\u000A    }\u000A    fmt.Println(d.String())\u000A}\u000A');codeLines.push('');codeLines.push('');
+    </script>
+    <script src="site.js" async></script>
+  </body>
+</html>
