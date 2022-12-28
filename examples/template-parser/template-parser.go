@@ -6,7 +6,8 @@ import (
 )
 
 func main() {
-	d, err := parser.Parse("example", "<p><!-- HTML comment -->abc</p>\n{{.Content}}")
+	d, err := parser.Parse("example",
+		"<p><!-- HTML comment -->abc</p>\n{{.Content}}")
 	if err != nil {
 		fmt.Println(err)
 		return
