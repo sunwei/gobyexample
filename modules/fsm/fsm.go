@@ -1,31 +1,5 @@
 package fsm
 
-type Data interface {
-	Error() error
-	Raw() any
-}
-type State string
-type StateHandler func(event Event) (State, Data)
-
-type TypeEvent int
-
-const (
-	Notification TypeEvent = iota
-	Action
-)
-
-type Event interface {
-	Type() TypeEvent
-	Message() any
-	Data() Data
-}
-
-type FSM interface {
-	Add(state State, handler StateHandler)
-	Process(message any) error
-	State() State
-}
-
 func New(initState State, initData Data) FSM {
 	return &fsm{
 		state:    initState,
@@ -64,23 +38,4 @@ func (f *fsm) Process(message any) error {
 	f.state = s
 	f.data = d
 	return f.data.Error()
-}
-
-type event struct {
-	t       TypeEvent
-	data    Data
-	message any
-}
-
-func (e *event) Type() TypeEvent {
-	return e.t
-}
-func (e *event) Data() Data {
-	return e.data
-}
-func (e *event) Message() any {
-	return e.message
-}
-func (e *event) Error() error {
-	return e.data.Error()
 }

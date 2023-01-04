@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/sunwei/gobyexample/modules/fsm"
+	"github.com/sunwei/gobyexample/modules/lexer"
 	"strings"
 )
 
@@ -55,9 +56,9 @@ func initFSM(l *lex) {
 			return rightDelimState, &data{err: nil, raw: input}
 		}
 
-		c, s := nextChar(input)
+		c, s := lexer.NextChar(input)
 		switch c {
-		case eof:
+		case lexer.EOF:
 			return textState, &data{err: errors.New("unclosed action")}
 		case '.':
 			trimInput := input[s:]
@@ -75,11 +76,11 @@ func initFSM(l *lex) {
 
 	l.fsm.Add(fieldState, func(event fsm.Event) (fsm.State, fsm.Data) {
 		input := event.Data().Raw().(string)
-		_, s := nextChar(input) // dot
+		_, s := lexer.NextChar(input) // dot
 		for {
-			c, s2 := nextChar(input[s:])
+			c, s2 := lexer.NextChar(input[s:])
 
-			if !isAlphaNumeric(c) {
+			if !lexer.IsAlphaNumeric(c) {
 				break
 			}
 			s += s2

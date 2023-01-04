@@ -100,6 +100,10 @@ func (l *lex) run() {
 	close(l.token)
 }
 
+func (l *lex) Emit(t lexer.Token) {
+	l.emit(t.(*token))
+}
+
 func (l *lex) emit(t *token) {
 	l.token <- t
 }
