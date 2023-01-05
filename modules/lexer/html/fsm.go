@@ -27,6 +27,11 @@ func (s *state) Mapping() map[fsm.State]lexer.StateHandler {
 		textState: func(lex lexer.Lexer) fsm.StateHandler {
 			return func(event fsm.Event) (fsm.State, fsm.Data) {
 				input := event.Data().Raw().(string)
+				var emitTextToken = func(start int, end int) {
+					if end > start {
+						lex.Emit(&lexer.BaseToken{Typ: TokenText, Val: input[start:end]})
+					}
+				}
 
 				pos := 0
 				for {
@@ -35,19 +40,19 @@ func (s *state) Mapping() map[fsm.State]lexer.StateHandler {
 
 						switch {
 						case 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z':
-							lex.Emit(&lexer.BaseToken{Typ: TokenText, Val: input[0:pos]})
+							emitTextToken(0, pos)
 							return startTagState, &fsm.BaseData{
 								Err:     nil,
 								RawData: input[pos:],
 							}
 						case c == '/':
-							lex.Emit(&lexer.BaseToken{Typ: TokenText, Val: input[0:pos]})
+							emitTextToken(0, pos)
 							return endTagState, &fsm.BaseData{
 								Err:     nil,
 								RawData: input[pos:],
 							}
 						case c == '!':
-							lex.Emit(&lexer.BaseToken{Typ: TokenText, Val: input[0:pos]})
+							emitTextToken(0, pos)
 							return commentState, &fsm.BaseData{
 								Err:     nil,
 								RawData: input[pos:],
@@ -58,7 +63,9 @@ func (s *state) Mapping() map[fsm.State]lexer.StateHandler {
 							continue
 						}
 					} else {
-						lex.Emit(&lexer.BaseToken{Typ: TokenText, Val: input})
+						if len(input) > 0 {
+							lex.Emit(&lexer.BaseToken{Typ: TokenText, Val: input[pos:]})
+						}
 						break
 					}
 				}
@@ -70,6 +77,7 @@ func (s *state) Mapping() map[fsm.State]lexer.StateHandler {
 		startTagState: func(lex lexer.Lexer) fsm.StateHandler {
 			return func(event fsm.Event) (fsm.State, fsm.Data) {
 				input := event.Data().Raw().(string)
+
 				if string(input[0]) != string(start) {
 					panic("input must start with '<'")
 				}
@@ -92,7 +100,8 @@ func (s *state) Mapping() map[fsm.State]lexer.StateHandler {
 		endTagState: func(lex lexer.Lexer) fsm.StateHandler {
 			return func(event fsm.Event) (fsm.State, fsm.Data) {
 				input := event.Data().Raw().(string)
-				if input[0:1] != "</" {
+
+				if input[:2] != "</" {
 					panic("input must start with '</'")
 				}
 				pos := len("</")
@@ -113,8 +122,22 @@ func (s *state) Mapping() map[fsm.State]lexer.StateHandler {
 		},
 		commentState: func(lex lexer.Lexer) fsm.StateHandler {
 			return func(event fsm.Event) (fsm.State, fsm.Data) {
-				//todo
-				return "", nil
+				input := event.Data().Raw().(string)
+
+				if input[0:4] != "<!--" {
+					panic("input must start with '<!--'")
+				}
+				pos := len("<!--")
+				c, s := readComment(input[pos:])
+				if s != -1 {
+					lex.Emit(&lexer.BaseToken{Typ: TokenComment, Val: c})
+					pos += s
+					pos += len("-->")
+				} else {
+					//todo
+				}
+
+				return textState, &fsm.BaseData{Err: nil, RawData: input[pos:]}
 			}
 		},
 	}

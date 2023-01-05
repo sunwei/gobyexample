@@ -1,15 +1,15 @@
 package html
 
 import (
-	"fmt"
 	"github.com/sunwei/gobyexample/modules/lexer"
+	"strings"
 )
 
 func readTagName(input string) (string, int) {
 	pos := 0
 	for {
 		c, s := lexer.NextChar(input[pos:])
-		fmt.Println("-=-=-=-", string(c))
+		//todo error check
 		switch c {
 		case ' ':
 			panic("attribute not support yet")
@@ -18,4 +18,12 @@ func readTagName(input string) (string, int) {
 		}
 		pos += s
 	}
+}
+
+func readComment(input string) (string, int) {
+	pos := strings.Index(input, "-->")
+	if pos > 0 {
+		return input[:pos], pos
+	}
+	return "", -1
 }

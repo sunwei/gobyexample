@@ -28,6 +28,10 @@ type fieldNode struct {
 	value string
 }
 
-func (t *fieldNode) String() string {
-	return t.value
+func (n *fieldNode) String() string {
+	return n.value
+}
+
+func (n *fieldNode) Type() NodeType {
+	return FieldNode
 }

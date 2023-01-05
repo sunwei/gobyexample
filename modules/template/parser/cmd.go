@@ -22,12 +22,16 @@ type commandNode struct {
 	*treeNode
 }
 
-func (t *commandNode) String() string {
-	cs := t.Children()
+func (n *commandNode) String() string {
+	cs := n.Children()
 	s := ""
 	for _, n := range cs {
 		s += n.(Node).String()
 		s += " "
 	}
 	return s
+}
+
+func (n *commandNode) Type() NodeType {
+	return CommandNode
 }

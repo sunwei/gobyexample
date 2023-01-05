@@ -33,3 +33,7 @@ type textNode struct {
 func (t *textNode) String() string {
 	return t.value
 }
+
+func (t *textNode) Type() NodeType {
+	return TextNode
+}

@@ -10,10 +10,6 @@ type Document struct {
 	*tree
 }
 
-func (d *Document) String() string {
-	return d.tree.String()
-}
-
 func Parse(name string, text string) (*Document, error) {
 	lex, err := action.New(text)
 	if err != nil {
@@ -76,7 +72,7 @@ func (p *parser) parse() error {
 		ps = ps2
 
 		if ps == done && n != nil {
-			p.tree.root.AppendChild(n)
+			p.tree.AppendChild(n)
 		}
 	}
 

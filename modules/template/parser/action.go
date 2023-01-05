@@ -81,12 +81,16 @@ type actionNode struct {
 	pipeline
 }
 
-func (t *actionNode) String() string {
-	cs := t.Children()
+func (n *actionNode) String() string {
+	cs := n.Children()
 	s := ""
 	for _, n := range cs {
 		s += n.(*commandNode).String()
 		s += "\n"
 	}
 	return s
+}
+
+func (n *actionNode) Type() NodeType {
+	return ActionNode
 }

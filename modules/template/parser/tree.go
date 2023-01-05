@@ -1,11 +1,11 @@
 package parser
 
 type tree struct {
-	root *treeNode
+	*treeNode
 }
 
 func (t *tree) String() string {
-	cs := t.root.Children()
+	cs := t.Children()
 	s := ""
 	for _, n := range cs {
 		s += n.(Node).String()
@@ -13,8 +13,12 @@ func (t *tree) String() string {
 	return s
 }
 
+func (t *tree) Type() NodeType {
+	return RootNode
+}
+
 func newTree() *tree {
-	return &tree{root: &treeNode{nodes: []TreeNode{}}}
+	return &tree{treeNode: &treeNode{nodes: []TreeNode{}}}
 }
 
 type treeNode struct {
@@ -27,4 +31,21 @@ func (n *treeNode) AppendChild(node TreeNode) {
 
 func (n *treeNode) Children() []TreeNode {
 	return n.nodes
+}
+
+func (t *tree) Walk(walker Walker) {
+	walkNode(t, walker)
+}
+
+func walkNode(n Node, walker Walker) WalkStatus {
+	status := walker(n, WalkIn)
+	if status != WalkStop {
+		cs := n.Children()
+		for _, c := range cs {
+			if s := walkNode(c.(Node), walker); s == WalkStop {
+				return WalkStop
+			}
+		}
+	}
+	return walker(n, WalkOut)
 }
