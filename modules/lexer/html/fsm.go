@@ -29,7 +29,14 @@ func (s *state) Mapping() map[fsm.State]lexer.StateHandler {
 				input := event.Data().Raw().(string)
 				var emitTextToken = func(start int, end int) {
 					if end > start {
-						lex.Emit(&lexer.BaseToken{Typ: TokenText, Val: input[start:end]})
+						lex.Emit(&Token{
+							BaseToken: lexer.BaseToken{
+								Typ: TokenText,
+								Val: input[start:end],
+							},
+							Start: "",
+							End:   "",
+						})
 					}
 				}
 
@@ -64,7 +71,7 @@ func (s *state) Mapping() map[fsm.State]lexer.StateHandler {
 						}
 					} else {
 						if len(input) > 0 {
-							lex.Emit(&lexer.BaseToken{Typ: TokenText, Val: input[pos:]})
+							emitTextToken(pos, len(input))
 						}
 						break
 					}
@@ -92,7 +99,11 @@ func (s *state) Mapping() map[fsm.State]lexer.StateHandler {
 					}
 					panic("attributes not supported yet")
 				}
-				lex.Emit(&lexer.BaseToken{Typ: TokenStartTag, Val: name})
+				lex.Emit(&Token{
+					BaseToken: lexer.BaseToken{Typ: TokenStartTag, Val: name},
+					Start:     "<",
+					End:       ">",
+				})
 
 				return textState, &fsm.BaseData{Err: nil, RawData: input[pos:]}
 			}
@@ -115,7 +126,11 @@ func (s *state) Mapping() map[fsm.State]lexer.StateHandler {
 					}
 					panic("no attributes in end tag")
 				}
-				lex.Emit(&lexer.BaseToken{Typ: TokenEndTag, Val: name})
+				lex.Emit(&Token{
+					BaseToken: lexer.BaseToken{Typ: TokenEndTag, Val: name},
+					Start:     "</",
+					End:       ">",
+				})
 
 				return textState, &fsm.BaseData{Err: nil, RawData: input[pos:]}
 			}
@@ -130,7 +145,11 @@ func (s *state) Mapping() map[fsm.State]lexer.StateHandler {
 				pos := len("<!--")
 				c, s := readComment(input[pos:])
 				if s != -1 {
-					lex.Emit(&lexer.BaseToken{Typ: TokenComment, Val: c})
+					lex.Emit(&Token{
+						BaseToken: lexer.BaseToken{Typ: TokenComment, Val: c},
+						Start:     "<!--",
+						End:       "-->",
+					})
 					pos += s
 					pos += len("-->")
 				} else {

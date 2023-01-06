@@ -20,6 +20,7 @@ func newCommand(tokens lexer.Tokens) (*commandNode, error) {
 
 type commandNode struct {
 	*treeNode
+	baseNode
 }
 
 func (n *commandNode) String() string {

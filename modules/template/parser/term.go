@@ -13,7 +13,7 @@ func (p *termParser) Parse(token lexer.Token) (Node, ParseState, error) {
 	case action.TokenField:
 		f := &fieldNode{
 			treeNode: &treeNode{},
-			value:    token.Value(),
+			baseNode: baseNode{val: token.Value()},
 		}
 		return f, done, nil
 	default:
@@ -25,11 +25,11 @@ func (p *termParser) Parse(token lexer.Token) (Node, ParseState, error) {
 
 type fieldNode struct {
 	*treeNode
-	value string
+	baseNode
 }
 
 func (n *fieldNode) String() string {
-	return n.value
+	return n.val
 }
 
 func (n *fieldNode) Type() NodeType {

@@ -79,6 +79,7 @@ type pipeline struct {
 type actionNode struct {
 	*treeNode
 	pipeline
+	baseNode
 }
 
 func (n *actionNode) String() string {

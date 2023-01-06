@@ -28,6 +28,7 @@ type Nodes []Node
 type Node interface {
 	String() string
 	Type() NodeType
+	SetVal(v string)
 	TreeNode
 }
 
@@ -50,4 +51,4 @@ const (
 	WalkOut
 )
 
-type Walker func(v Node, ws WalkState) WalkStatus
+type Walker func(n Node, ws WalkState) WalkStatus

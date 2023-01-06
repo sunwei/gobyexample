@@ -21,17 +21,17 @@ func (t *textParser) Parse(token lexer.Token) (Node, ParseState, error) {
 	}
 	return &textNode{
 		treeNode: &treeNode{},
-		value:    token.Value(),
+		baseNode: baseNode{val: token.Value()},
 	}, done, nil
 }
 
 type textNode struct {
 	*treeNode
-	value string
+	baseNode
 }
 
 func (t *textNode) String() string {
-	return t.value
+	return t.val
 }
 
 func (t *textNode) Type() NodeType {

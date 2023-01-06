@@ -23,6 +23,7 @@ func newTree() *tree {
 
 type treeNode struct {
 	nodes []TreeNode
+	baseNode
 }
 
 func (n *treeNode) AppendChild(node TreeNode) {
