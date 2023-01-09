@@ -21,6 +21,7 @@ const (
 	ActionNode
 	CommandNode
 	FieldNode
+	IdentifierNode
 )
 
 type Nodes []Node

@@ -27,8 +27,10 @@ func (n *commandNode) String() string {
 	cs := n.Children()
 	s := ""
 	for _, n := range cs {
+		if s != "" {
+			s += " "
+		}
 		s += n.(Node).String()
-		s += " "
 	}
 	return s
 }

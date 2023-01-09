@@ -27,6 +27,8 @@ func (s *state) Mapping() map[fsm.State]lexer.StateHandler {
 		textState: func(lex lexer.Lexer) fsm.StateHandler {
 			return func(event fsm.Event) (fsm.State, fsm.Data) {
 				input := event.Data().Raw().(string)
+				input = lexer.TrimLeftSpace(input)
+
 				var emitTextToken = func(start int, end int) {
 					if end > start {
 						lex.Emit(&Token{

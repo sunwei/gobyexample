@@ -13,6 +13,7 @@ const (
 	TokenRightDelim
 	TokenText
 	TokenField
+	TokenIdentifier
 	TokenPipe
 )
 

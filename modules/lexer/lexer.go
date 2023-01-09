@@ -18,7 +18,7 @@ func New(input string, sms FSMState) (Lexer, error) {
 
 	l := &lex{
 		input:     input,
-		token:     make(chan *BaseToken),
+		token:     make(chan Token),
 		fsm:       f,
 		initState: sms.Init(),
 		eofState:  sms.EoF(),
@@ -32,7 +32,7 @@ func New(input string, sms FSMState) (Lexer, error) {
 
 type lex struct {
 	input     string
-	token     chan *BaseToken
+	token     chan Token
 	fsm       fsm.FSM
 	initState fsm.State
 	eofState  fsm.State
@@ -45,7 +45,7 @@ func (l *lex) initFSM(mapping map[fsm.State]StateHandler) {
 }
 
 func (l *lex) Emit(t Token) {
-	l.token <- t.(*BaseToken)
+	l.token <- t
 }
 
 func (l *lex) Next() Token {

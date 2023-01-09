@@ -46,6 +46,24 @@ func (p *actionParser) Parse(token lexer.Token) (Node, ParseState, error) {
 	return nil, open, nil
 }
 
+func InsertCommand(an Node, funcName string) error {
+	_, ok := an.(*actionNode)
+	if !ok {
+		return errors.New("action node should be the parent")
+	}
+
+	cmd, err := newCommand(lexer.Tokens{&lexer.BaseToken{
+		Typ: action.TokenIdentifier,
+		Val: funcName,
+	}})
+	if err != nil {
+		return err
+	}
+
+	an.AppendChild(cmd)
+	return nil
+}
+
 func newAction(tokens lexer.Tokens) (*actionNode, error) {
 	a := &actionNode{
 		treeNode: &treeNode{},
@@ -85,9 +103,11 @@ type actionNode struct {
 func (n *actionNode) String() string {
 	cs := n.Children()
 	s := ""
-	for _, n := range cs {
-		s += n.(*commandNode).String()
-		s += "\n"
+	for _, cmd := range cs {
+		if s != "" {
+			s += " | "
+		}
+		s += cmd.(*commandNode).String()
 	}
 	return s
 }

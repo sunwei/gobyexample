@@ -8,10 +8,10 @@ import (
 	"strings"
 )
 
-func escapeTextNode(n parser.Node) error {
+func escapeTextNode(c context, n parser.Node) (context, error) {
 	lex, err := html.New(n.String())
 	if err != nil {
-		return err
+		return context{}, err
 	}
 
 	escapedStr := ""
@@ -25,17 +25,20 @@ func escapeTextNode(n parser.Node) error {
 		case html.TokenComment:
 			// escape comment
 			continue
-		default:
-			escapedStr += string(token.(*html.Token).Start) +
-				escapeString(token.Value()) +
-				string(token.(*html.Token).End)
+		case html.TokenStartTag:
+			c.state = stateTag
+		case html.TokenEndTag, html.TokenText:
+			c.state = stateText
 		}
+
+		escapedStr += string(token.(*html.Token).Start) +
+			escapeString(token.Value()) +
+			string(token.(*html.Token).End)
 	}
 
 	n.SetVal(escapedStr)
 
-	return nil
-
+	return c, nil
 }
 
 const escapedChars = "&'<>\"\r"

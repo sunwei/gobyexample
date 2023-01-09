@@ -16,6 +16,12 @@ func (p *termParser) Parse(token lexer.Token) (Node, ParseState, error) {
 			baseNode: baseNode{val: token.Value()},
 		}
 		return f, done, nil
+	case action.TokenIdentifier:
+		i := &identifierNode{
+			treeNode: &treeNode{},
+			baseNode: baseNode{val: token.Value()},
+		}
+		return i, done, nil
 	default:
 		panic("not supported type token yet")
 	}
@@ -34,4 +40,17 @@ func (n *fieldNode) String() string {
 
 func (n *fieldNode) Type() NodeType {
 	return FieldNode
+}
+
+type identifierNode struct {
+	*treeNode
+	baseNode
+}
+
+func (i *identifierNode) String() string {
+	return i.val
+}
+
+func (i *identifierNode) Type() NodeType {
+	return IdentifierNode
 }
