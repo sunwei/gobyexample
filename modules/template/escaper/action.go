@@ -10,7 +10,7 @@ func escapeActionNode(c context, n parser.Node) (context, error) {
 	var escFuncName string
 	switch c.state {
 	case stateText:
-		escFuncName = "_html_template_htmlescaper"
+		escFuncName = "EscapeHtml"
 	}
 	err := parser.InsertCommand(n, escFuncName)
 	if err != nil {

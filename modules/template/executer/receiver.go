@@ -1,9 +1,13 @@
 package executer
 
-import "reflect"
+import (
+	"github.com/sunwei/gobyexample/modules/template/escaper"
+	"reflect"
+)
 
 type receiver struct {
 	Data reflect.Value
+	*escaper.Html
 }
 
 func newReceiver(data any) *receiver {
@@ -33,6 +37,10 @@ func (r *receiver) data() reflect.Value {
 	}
 
 	return ptr
+}
+
+func (r *receiver) ptr() reflect.Value {
+	return reflect.ValueOf(r)
 }
 
 func indirect(v reflect.Value) (rv reflect.Value, isNil bool) {
