@@ -1,11 +1,10 @@
-package executer
+package executor
 
 import (
 	"fmt"
 	"github.com/sunwei/gobyexample/modules/template"
 	"github.com/sunwei/gobyexample/modules/template/parser"
 	"io"
-	"reflect"
 )
 
 func Execute(t template.Template, w io.Writer, data any) error {
@@ -14,7 +13,7 @@ func Execute(t template.Template, w io.Writer, data any) error {
 		state: stateText,
 		rcv:   newReceiver(data),
 		w:     w,
-		last:  reflect.Value{},
+		last:  missingVal,
 	}
 
 	doc := t.Tree()
@@ -43,7 +42,10 @@ func Execute(t template.Template, w io.Writer, data any) error {
 					panic(fmt.Sprintf("%s: text node write error %#v", t.Name(), err))
 				}
 			case parser.ActionNode:
-
+				_, err := fmt.Fprint(c.w, c.last.Interface())
+				if err != nil {
+					fmt.Println(err)
+				}
 			}
 		}
 		return parser.WalkContinue

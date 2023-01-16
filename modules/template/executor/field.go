@@ -1,4 +1,4 @@
-package executer
+package executor
 
 import (
 	"github.com/sunwei/gobyexample/modules/template/parser"

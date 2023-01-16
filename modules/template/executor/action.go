@@ -1,8 +1,7 @@
-package executer
+package executor
 
 import (
 	"github.com/sunwei/gobyexample/modules/template/parser"
-	"reflect"
 )
 
 func evalActionNode(c context, n parser.Node) (context, error) {
@@ -10,6 +9,6 @@ func evalActionNode(c context, n parser.Node) (context, error) {
 		state: stateAction,
 		rcv:   c.rcv,
 		w:     c.w,
-		last:  reflect.Value{},
+		last:  missingVal,
 	}, nil
 }
