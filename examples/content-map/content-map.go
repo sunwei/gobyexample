@@ -79,8 +79,12 @@ type contentMap struct {
 
 func newContentMap() *contentMap {
 	return &contentMap{
-		pages:    &contentTree{Name: "pages", Tree: radixtree.New()},
-		sections: &contentTree{Name: "sections", Tree: radixtree.New()},
+		pages: &contentTree{
+			Name: "pages",
+			Tree: radixtree.New()},
+		sections: &contentTree{
+			Name: "sections",
+			Tree: radixtree.New()},
 	}
 }
 
