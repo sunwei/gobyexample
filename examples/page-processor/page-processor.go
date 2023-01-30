@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"golang.org/x/sync/errgroup"
 	"strconv"
+	"time"
 )
 
 func main() {
@@ -21,6 +22,7 @@ func main() {
 	data := []any{1, "hello", 2, 3, 4, 5, 6, "world", "happy"}
 	for _, d := range data {
 		err := p.Process(d)
+		time.Sleep(1 * time.Millisecond)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -76,12 +78,14 @@ func (p *pagesProcessor) Process(item any) error {
 			return err
 		}
 	default:
-		panic(fmt.Sprintf("unrecognized item type in Process: %T", item))
+		panic(fmt.Sprintf(
+			"unrecognized item type in Process: %T", item))
 	}
 
 	return nil
 }
-func (p *pagesProcessor) Start(ctx context.Context) context.Context {
+func (p *pagesProcessor) Start(
+	ctx context.Context) context.Context {
 	for _, proc := range p.processors {
 		ctx = proc.Start(ctx)
 	}
@@ -127,7 +131,8 @@ type intProcessor struct {
 	processor
 }
 
-func (i *intProcessor) Start(ctx context.Context) context.Context {
+func (i *intProcessor) Start(
+	ctx context.Context) context.Context {
 	ctx = i.processor.Start(ctx)
 	i.processor.itemGroup.Go(func() error {
 		for item := range i.processor.itemChan {
@@ -145,7 +150,8 @@ func (i *intProcessor) doProcess(item any) error {
 	case int:
 		i.processor.s.Add(strconv.Itoa(v))
 	default:
-		panic(fmt.Sprintf("unrecognized item type in intProcess: %T", item))
+		panic(fmt.Sprintf(
+			"unrecognized item type in intProcess: %T", item))
 	}
 	return nil
 }
@@ -154,7 +160,8 @@ type stringProcessor struct {
 	processor
 }
 
-func (i *stringProcessor) Start(ctx context.Context) context.Context {
+func (i *stringProcessor) Start(
+	ctx context.Context) context.Context {
 	ctx = i.processor.Start(ctx)
 	i.processor.itemGroup.Go(func() error {
 		for item := range i.processor.itemChan {
@@ -172,7 +179,9 @@ func (i *stringProcessor) doProcess(item any) error {
 	case string:
 		i.processor.s.Add(v)
 	default:
-		panic(fmt.Sprintf("unrecognized item type in stringProcessor: %T", item))
+		panic(fmt.Sprintf(
+			"unrecognized item type in stringProcessor: %T",
+			item))
 	}
 	return nil
 }
