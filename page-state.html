@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>深入理解Hugo: Page State</title>
+    <link rel=stylesheet href="site.css">
+  </head>
+  <script>
+      onkeydown = (e) => {
+          
+          if (e.key == "ArrowLeft") {
+              window.location.href = 'page-processor';
+          }
+          
+          
+      }
+  </script>
+  <body>
+    <div class="example" id="page-state">
+      <h2><a href="./">深入理解Hugo</a>: Page State</h2>
+      
+      <table>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            <a href="https://go.dev/play/p/IUcZAAhVe_S"><img title="Run code" src="play.png" class="run" /></a><img title="Copy code" src="clipboard.png" class="copy" />
+          <pre class="chroma"><span class="kn">package</span> <span class="nx">main</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kn">import</span> <span class="p">(</span>
+    <span class="s">&#34;fmt&#34;</span>
+    <span class="s">&#34;html/template&#34;</span>
+<span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">outputFormats</span> <span class="o">:=</span> <span class="nf">createOutputFormats</span><span class="p">()</span>
+    <span class="nx">renderFormats</span> <span class="o">:=</span> <span class="nf">initRenderFormats</span><span class="p">(</span><span class="nx">outputFormats</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">s</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">site</span><span class="p">{</span>
+        <span class="nx">outputFormats</span><span class="p">:</span> <span class="nx">outputFormats</span><span class="p">,</span>
+        <span class="nx">renderFormats</span><span class="p">:</span> <span class="nx">renderFormats</span><span class="p">,</span>
+    <span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">ps</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">pageState</span><span class="p">{</span>
+        <span class="nx">pageOutputs</span><span class="p">:</span> <span class="kc">nil</span><span class="p">,</span>
+        <span class="nx">pageOutput</span><span class="p">:</span>  <span class="kc">nil</span><span class="p">,</span>
+        <span class="nx">pageCommon</span><span class="p">:</span>  <span class="o">&amp;</span><span class="nx">pageCommon</span><span class="p">{</span><span class="nx">m</span><span class="p">:</span> <span class="o">&amp;</span><span class="nx">pageMeta</span><span class="p">{</span><span class="nx">kind</span><span class="p">:</span> <span class="nx">KindPage</span><span class="p">}},</span>
+    <span class="p">}</span>
+    <span class="nx">ps</span><span class="p">.</span><span class="nf">init</span><span class="p">(</span><span class="nx">s</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>prepare</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+    <span class="nx">ps</span><span class="p">.</span><span class="nx">pageOutput</span> <span class="p">=</span> <span class="nx">ps</span><span class="p">.</span><span class="nx">pageOutputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>render</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+    <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">ps</span><span class="p">.</span><span class="nf">targetPaths</span><span class="p">().</span><span class="nx">TargetFilename</span><span class="p">)</span>
+    <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">ps</span><span class="p">.</span><span class="nf">Content</span><span class="p">())</span>
+    <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">ps</span><span class="p">.</span><span class="nx">m</span><span class="p">.</span><span class="nx">kind</span><span class="p">)</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">site</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">outputFormats</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">Formats</span>
+    <span class="nx">renderFormats</span> <span class="nx">Formats</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>This slice will be of same length as the number of global slice of output
+formats (for all sites).</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">pageState</span> <span class="kd">struct</span> <span class="p">{</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">pageOutputs</span> <span class="p">[]</span><span class="o">*</span><span class="nx">pageOutput</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>This will be shifted out when we start to render a new output format.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+    <span class="o">*</span><span class="nx">pageOutput</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>Common for all output formats.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+    <span class="o">*</span><span class="nx">pageCommon</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="o">*</span><span class="nx">pageState</span><span class="p">)</span> <span class="nf">init</span><span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">site</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">pp</span> <span class="o">:=</span> <span class="nf">newPagePaths</span><span class="p">(</span><span class="nx">s</span><span class="p">)</span>
+    <span class="nx">p</span><span class="p">.</span><span class="nx">pageOutputs</span> <span class="p">=</span> <span class="nb">make</span><span class="p">([]</span><span class="o">*</span><span class="nx">pageOutput</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">renderFormats</span><span class="p">))</span>
+    <span class="k">for</span> <span class="nx">i</span><span class="p">,</span> <span class="nx">f</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">s</span><span class="p">.</span><span class="nx">renderFormats</span> <span class="p">{</span>
+        <span class="nx">ft</span><span class="p">,</span> <span class="nx">found</span> <span class="o">:=</span> <span class="nx">pp</span><span class="p">.</span><span class="nx">targetPaths</span><span class="p">[</span><span class="nx">f</span><span class="p">.</span><span class="nx">Name</span><span class="p">]</span>
+        <span class="k">if</span> <span class="p">!</span><span class="nx">found</span> <span class="p">{</span>
+            <span class="nb">panic</span><span class="p">(</span><span class="s">&#34;target path not found&#34;</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="nx">providers</span> <span class="o">:=</span> <span class="kd">struct</span><span class="p">{</span> <span class="nx">targetPather</span> <span class="p">}{</span><span class="nx">ft</span><span class="p">}</span>
+        <span class="nx">po</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">pageOutput</span><span class="p">{</span>
+            <span class="nx">f</span><span class="p">:</span>                      <span class="nx">f</span><span class="p">,</span>
+            <span class="nx">pagePerOutputProviders</span><span class="p">:</span> <span class="nx">providers</span><span class="p">,</span>
+            <span class="nx">ContentProvider</span><span class="p">:</span>        <span class="kc">nil</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="nx">contentProvider</span> <span class="o">:=</span> <span class="nf">newPageContentOutput</span><span class="p">(</span><span class="nx">po</span><span class="p">)</span>
+        <span class="nx">po</span><span class="p">.</span><span class="nx">ContentProvider</span> <span class="p">=</span> <span class="nx">contentProvider</span>
+        <span class="nx">p</span><span class="p">.</span><span class="nx">pageOutputs</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="p">=</span> <span class="nx">po</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">newPageContentOutput</span><span class="p">(</span><span class="nx">po</span> <span class="o">*</span><span class="nx">pageOutput</span><span class="p">)</span> <span class="o">*</span><span class="nx">pageContentOutput</span> <span class="p">{</span>
+    <span class="nx">cp</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">pageContentOutput</span><span class="p">{</span>
+        <span class="nx">f</span><span class="p">:</span> <span class="nx">po</span><span class="p">.</span><span class="nx">f</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="nx">initContent</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nx">cp</span><span class="p">.</span><span class="nx">content</span> <span class="p">=</span> <span class="nx">template</span><span class="p">.</span><span class="nf">HTML</span><span class="p">(</span><span class="s">&#34;&lt;p&gt;hello content&lt;/p&gt;&#34;</span><span class="p">)</span>
+    <span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">cp</span><span class="p">.</span><span class="nx">initMain</span> <span class="p">=</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nf">initContent</span><span class="p">()</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">cp</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">newPagePaths</span><span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">site</span><span class="p">)</span> <span class="nx">pagePaths</span> <span class="p">{</span>
+    <span class="nx">outputFormats</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">renderFormats</span>
+    <span class="nx">targets</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">targetPathsHolder</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">f</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">outputFormats</span> <span class="p">{</span>
+        <span class="nx">target</span> <span class="o">:=</span> <span class="s">&#34;/&#34;</span> <span class="o">+</span> <span class="s">&#34;blog&#34;</span> <span class="o">+</span> <span class="s">&#34;/&#34;</span> <span class="o">+</span> <span class="nx">f</span><span class="p">.</span><span class="nx">BaseName</span> <span class="o">+</span>
+            <span class="s">&#34;.&#34;</span> <span class="o">+</span> <span class="nx">f</span><span class="p">.</span><span class="nx">MediaType</span><span class="p">.</span><span class="nx">SubType</span>
+        <span class="nx">paths</span> <span class="o">:=</span> <span class="nx">TargetPaths</span><span class="p">{</span>
+            <span class="nx">TargetFilename</span><span class="p">:</span> <span class="nx">target</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="nx">targets</span><span class="p">[</span><span class="nx">f</span><span class="p">.</span><span class="nx">Name</span><span class="p">]</span> <span class="p">=</span> <span class="nx">targetPathsHolder</span><span class="p">{</span>
+            <span class="nx">paths</span><span class="p">:</span> <span class="nx">paths</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">pagePaths</span><span class="p">{</span>
+        <span class="nx">targetPaths</span><span class="p">:</span> <span class="nx">targets</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">pagePaths</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">targetPaths</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">targetPathsHolder</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">targetPathsHolder</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">paths</span> <span class="nx">TargetPaths</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <span class="nx">targetPathsHolder</span><span class="p">)</span> <span class="nf">targetPaths</span><span class="p">()</span> <span class="nx">TargetPaths</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">t</span><span class="p">.</span><span class="nx">paths</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">pageOutput</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">f</span> <span class="nx">Format</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>These interface provides the functionality that is specific for this
+output format.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+    <span class="nx">pagePerOutputProviders</span>
+    <span class="nx">ContentProvider</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>May be nil.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+    <span class="nx">cp</span> <span class="o">*</span><span class="nx">pageContentOutput</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>pageContentOutput represents the Page content for a given output format.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">type</span> <span class="nx">pageContentOutput</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">f</span>        <span class="nx">Format</span>
+    <span class="nx">initMain</span> <span class="kd">func</span><span class="p">()</span>
+    <span class="nx">content</span>  <span class="nx">template</span><span class="p">.</span><span class="nx">HTML</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="o">*</span><span class="nx">pageContentOutput</span><span class="p">)</span> <span class="nf">Content</span><span class="p">()</span> <span class="nx">any</span> <span class="p">{</span>
+    <span class="nx">p</span><span class="p">.</span><span class="nf">initMain</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nx">p</span><span class="p">.</span><span class="nx">content</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>these will be shifted out when rendering a given output format.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">type</span> <span class="nx">pagePerOutputProviders</span> <span class="kd">interface</span> <span class="p">{</span>
+    <span class="nx">targetPather</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">targetPather</span> <span class="kd">interface</span> <span class="p">{</span>
+    <span class="nf">targetPaths</span><span class="p">()</span> <span class="nx">TargetPaths</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>Where to store the file on disk relative to the publish dir. OS slashes.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">TargetPaths</span> <span class="kd">struct</span> <span class="p">{</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">TargetFilename</span> <span class="kt">string</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">ContentProvider</span> <span class="kd">interface</span> <span class="p">{</span>
+    <span class="nf">Content</span><span class="p">()</span> <span class="nx">any</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">pageCommon</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">m</span> <span class="o">*</span><span class="nx">pageMeta</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>kind is the discriminator that identifies the different page types
+in the different page collections. This can, as an example, be used
+to to filter regular pages, find sections etc.
+Kind will, for the pages available to the templates, be one of:
+page, home, section, taxonomy and term.
+It is of string type to make it easy to reason about in
+the templates.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">pageMeta</span> <span class="kd">struct</span> <span class="p">{</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">kind</span> <span class="kt">string</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">initRenderFormats</span><span class="p">(</span>
+    <span class="nx">outputFormats</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">Formats</span><span class="p">)</span> <span class="nx">Formats</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">outputFormats</span><span class="p">[</span><span class="nx">KindPage</span><span class="p">]</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">createOutputFormats</span><span class="p">()</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">Formats</span> <span class="p">{</span>
+    <span class="nx">m</span> <span class="o">:=</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">Formats</span><span class="p">{</span>
+        <span class="nx">KindPage</span><span class="p">:</span> <span class="p">{</span><span class="nx">HTMLFormat</span><span class="p">},</span>
+    <span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="k">return</span> <span class="nx">m</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">const</span> <span class="p">(</span>
+    <span class="nx">KindPage</span> <span class="p">=</span> <span class="s">&#34;page&#34;</span>
+<span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">var</span> <span class="nx">HTMLType</span> <span class="p">=</span> <span class="nf">newMediaType</span><span class="p">(</span><span class="s">&#34;text&#34;</span><span class="p">,</span> <span class="s">&#34;html&#34;</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>HTMLFormat An ordered list of built-in output formats.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">var</span> <span class="nx">HTMLFormat</span> <span class="p">=</span> <span class="nx">Format</span><span class="p">{</span>
+    <span class="nx">Name</span><span class="p">:</span>      <span class="s">&#34;HTML&#34;</span><span class="p">,</span>
+    <span class="nx">MediaType</span><span class="p">:</span> <span class="nx">HTMLType</span><span class="p">,</span>
+    <span class="nx">BaseName</span><span class="p">:</span>  <span class="s">&#34;index&#34;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">newMediaType</span><span class="p">(</span><span class="nx">main</span><span class="p">,</span> <span class="nx">sub</span> <span class="kt">string</span><span class="p">)</span> <span class="nx">Type</span> <span class="p">{</span>
+    <span class="nx">t</span> <span class="o">:=</span> <span class="nx">Type</span><span class="p">{</span>
+        <span class="nx">MainType</span><span class="p">:</span>  <span class="nx">main</span><span class="p">,</span>
+        <span class="nx">SubType</span><span class="p">:</span>   <span class="nx">sub</span><span class="p">,</span>
+        <span class="nx">Delimiter</span><span class="p">:</span> <span class="s">&#34;.&#34;</span><span class="p">}</span>
+    <span class="k">return</span> <span class="nx">t</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">Type</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">MainType</span>  <span class="kt">string</span> <span class="s">`json:&#34;mainType&#34;`</span>  <span class="c1">// i.e. text
+</span><span class="c1"></span>    <span class="nx">SubType</span>   <span class="kt">string</span> <span class="s">`json:&#34;subType&#34;`</span>   <span class="c1">// i.e. html
+</span><span class="c1"></span>    <span class="nx">Delimiter</span> <span class="kt">string</span> <span class="s">`json:&#34;delimiter&#34;`</span> <span class="c1">// e.g. &#34;.&#34;
+</span><span class="c1"></span><span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>The Name is used as an identifier. Internal output formats (i.e. HTML and RSS)
+can be overridden by providing a new definition for those types.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">Format</span> <span class="kd">struct</span> <span class="p">{</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">Name</span> <span class="kt">string</span> <span class="s">`json:&#34;name&#34;`</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">MediaType</span> <span class="nx">Type</span> <span class="s">`json:&#34;-&#34;`</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>The base output file name used when not using &ldquo;ugly URLs&rdquo;, defaults to &ldquo;index&rdquo;.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+    <span class="nx">BaseName</span> <span class="kt">string</span> <span class="s">`json:&#34;baseName&#34;`</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">Formats</span> <span class="p">[]</span><span class="nx">Format</span>
+</pre>
+          </td>
+        </tr>
+        
+      </table>
+      
+      <table>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="go">/blog/index.html
+</span><span class="go">&lt;p&gt;hello content&lt;/p&gt;
+</span><span class="go">page</span></pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code">
+            
+          <pre class="chroma"><span class="go">Program exited.</span></pre>
+          </td>
+        </tr>
+        
+      </table>
+      
+      
+
+    <p class="footer">
+      by <a href="https://sunwei.xyz">孙伟</a>
+      | <a href="https://github.com/sunwei/gobyexample">source</a>
+      | <a href="https://github.com/sunwei/gobyexample#license">license</a>
+      | Inspired by <a href="https://github.com/mmcgrana/gobyexample">gobyexample.com</a>
+      | Build with LOVE 💞
+    </p>
+
+    </div>
+    <script>
+      var codeLines = [];
+      codeLines.push('package main\u000A');codeLines.push('import (\u000A    \"fmt\"\u000A    \"html/template\"\u000A)\u000A');codeLines.push('func main() {\u000A    outputFormats :\u003D createOutputFormats()\u000A    renderFormats :\u003D initRenderFormats(outputFormats)\u000A');codeLines.push('    s :\u003D \u0026site{\u000A        outputFormats: outputFormats,\u000A        renderFormats: renderFormats,\u000A    }\u000A');codeLines.push('    ps :\u003D \u0026pageState{\u000A        pageOutputs: nil,\u000A        pageOutput:  nil,\u000A        pageCommon:  \u0026pageCommon{m: \u0026pageMeta{kind: KindPage}},\u000A    }\u000A    ps.init(s)\u000A');codeLines.push('    ps.pageOutput \u003D ps.pageOutputs[0]\u000A');codeLines.push('    fmt.Println(ps.targetPaths().TargetFilename)\u000A    fmt.Println(ps.Content())\u000A    fmt.Println(ps.m.kind)\u000A}\u000A');codeLines.push('type site struct {\u000A    outputFormats map[string]Formats\u000A    renderFormats Formats\u000A}\u000A');codeLines.push('type pageState struct {\u000A');codeLines.push('    pageOutputs []*pageOutput\u000A');codeLines.push('    *pageOutput\u000A');codeLines.push('    *pageCommon\u000A}\u000A');codeLines.push('func (p *pageState) init(s *site) {\u000A    pp :\u003D newPagePaths(s)\u000A    p.pageOutputs \u003D make([]*pageOutput, len(s.renderFormats))\u000A    for i, f :\u003D range s.renderFormats {\u000A        ft, found :\u003D pp.targetPaths[f.Name]\u000A        if !found {\u000A            panic(\"target path not found\")\u000A        }\u000A        providers :\u003D struct{ targetPather }{ft}\u000A        po :\u003D \u0026pageOutput{\u000A            f:                      f,\u000A            pagePerOutputProviders: providers,\u000A            ContentProvider:        nil,\u000A        }\u000A        contentProvider :\u003D newPageContentOutput(po)\u000A        po.ContentProvider \u003D contentProvider\u000A        p.pageOutputs[i] \u003D po\u000A    }\u000A}\u000A');codeLines.push('func newPageContentOutput(po *pageOutput) *pageContentOutput {\u000A    cp :\u003D \u0026pageContentOutput{\u000A        f: po.f,\u000A    }\u000A    initContent :\u003D func() {\u000A        cp.content \u003D template.HTML(\"\u003Cp\u003Ehello content\u003C/p\u003E\")\u000A    }\u000A');codeLines.push('    cp.initMain \u003D func() {\u000A        initContent()\u000A    }\u000A    return cp\u000A}\u000A');codeLines.push('func newPagePaths(s *site) pagePaths {\u000A    outputFormats :\u003D s.renderFormats\u000A    targets :\u003D make(map[string]targetPathsHolder)\u000A');codeLines.push('    for _, f :\u003D range outputFormats {\u000A        target :\u003D \"/\" + \"blog\" + \"/\" + f.BaseName +\u000A            \".\" + f.MediaType.SubType\u000A        paths :\u003D TargetPaths{\u000A            TargetFilename: target,\u000A        }\u000A        targets[f.Name] \u003D targetPathsHolder{\u000A            paths: paths,\u000A        }\u000A    }\u000A    return pagePaths{\u000A        targetPaths: targets,\u000A    }\u000A}\u000A');codeLines.push('type pagePaths struct {\u000A    targetPaths map[string]targetPathsHolder\u000A}\u000A');codeLines.push('type targetPathsHolder struct {\u000A    paths TargetPaths\u000A}\u000A');codeLines.push('func (t targetPathsHolder) targetPaths() TargetPaths {\u000A    return t.paths\u000A}\u000A');codeLines.push('type pageOutput struct {\u000A    f Format\u000A');codeLines.push('    pagePerOutputProviders\u000A    ContentProvider\u000A');codeLines.push('    cp *pageContentOutput\u000A}\u000A');codeLines.push('type pageContentOutput struct {\u000A    f        Format\u000A    initMain func()\u000A    content  template.HTML\u000A}\u000A');codeLines.push('func (p *pageContentOutput) Content() any {\u000A    p.initMain()\u000A    return p.content\u000A}\u000A');codeLines.push('type pagePerOutputProviders interface {\u000A    targetPather\u000A}\u000A');codeLines.push('type targetPather interface {\u000A    targetPaths() TargetPaths\u000A}\u000A');codeLines.push('type TargetPaths struct {\u000A');codeLines.push('    TargetFilename string\u000A}\u000A');codeLines.push('type ContentProvider interface {\u000A    Content() any\u000A}\u000A');codeLines.push('type pageCommon struct {\u000A    m *pageMeta\u000A}\u000A');codeLines.push('type pageMeta struct {\u000A');codeLines.push('    kind string\u000A}\u000A');codeLines.push('func initRenderFormats(\u000A    outputFormats map[string]Formats) Formats {\u000A    return outputFormats[KindPage]\u000A}\u000A');codeLines.push('func createOutputFormats() map[string]Formats {\u000A    m :\u003D map[string]Formats{\u000A        KindPage: {HTMLFormat},\u000A    }\u000A');codeLines.push('    return m\u000A}\u000A');codeLines.push('const (\u000A    KindPage \u003D \"page\"\u000A)\u000A');codeLines.push('var HTMLType \u003D newMediaType(\"text\", \"html\")\u000A');codeLines.push('var HTMLFormat \u003D Format{\u000A    Name:      \"HTML\",\u000A    MediaType: HTMLType,\u000A    BaseName:  \"index\",\u000A}\u000A');codeLines.push('func newMediaType(main, sub string) Type {\u000A    t :\u003D Type{\u000A        MainType:  main,\u000A        SubType:   sub,\u000A        Delimiter: \".\"}\u000A    return t\u000A}\u000A');codeLines.push('type Type struct {\u000A    MainType  string `json:\"mainType\"`  // i.e. text\u000A    SubType   string `json:\"subType\"`   // i.e. html\u000A    Delimiter string `json:\"delimiter\"` // e.g. \".\"\u000A}\u000A');codeLines.push('type Format struct {\u000A');codeLines.push('    Name string `json:\"name\"`\u000A');codeLines.push('    MediaType Type `json:\"-\"`\u000A');codeLines.push('    BaseName string `json:\"baseName\"`\u000A}\u000A');codeLines.push('type Formats []Format\u000A');codeLines.push('');codeLines.push('');
+    </script>
+    <script src="site.js" async></script>
+  </body>
+</html>

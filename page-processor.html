@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>深入理解Hugo: Page Processor</title>
+    <link rel=stylesheet href="site.css">
+  </head>
+  <script>
+      onkeydown = (e) => {
+          
+          if (e.key == "ArrowLeft") {
+              window.location.href = 'content-map';
+          }
+          
+          
+          if (e.key == "ArrowRight") {
+              window.location.href = 'page-state';
+          }
+          
+      }
+  </script>
+  <body>
+    <div class="example" id="page-processor">
+      <h2><a href="./">深入理解Hugo</a>: Page Processor</h2>
+      
+      <table>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            <a href="https://go.dev/play/p/QxEAm8I9JpB"><img title="Run code" src="play.png" class="run" /></a><img title="Copy code" src="clipboard.png" class="copy" />
+          <pre class="chroma"><span class="kn">package</span> <span class="nx">main</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kn">import</span> <span class="p">(</span>
+    <span class="s">&#34;context&#34;</span>
+    <span class="s">&#34;fmt&#34;</span>
+    <span class="s">&#34;golang.org/x/sync/errgroup&#34;</span>
+    <span class="s">&#34;strconv&#34;</span>
+    <span class="s">&#34;time&#34;</span>
+<span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">s</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">set</span><span class="p">{</span><span class="nx">elements</span><span class="p">:</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{}}</span>
+    <span class="nx">p</span> <span class="o">:=</span> <span class="nf">newPagesProcessor</span><span class="p">(</span><span class="nx">s</span><span class="p">)</span>
+    <span class="nx">p</span><span class="p">.</span><span class="nf">Start</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">())</span>
+    <span class="k">defer</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nx">err</span> <span class="o">:=</span> <span class="nx">p</span><span class="p">.</span><span class="nf">Wait</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">}()</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">data</span> <span class="o">:=</span> <span class="p">[]</span><span class="nx">any</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="s">&#34;hello&#34;</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="s">&#34;world&#34;</span><span class="p">,</span> <span class="s">&#34;happy&#34;</span><span class="p">}</span>
+    <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">d</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">data</span> <span class="p">{</span>
+        <span class="nx">err</span> <span class="o">:=</span> <span class="nx">p</span><span class="p">.</span><span class="nf">Process</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span>
+        <span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="mi">1</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">s</span><span class="p">)</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">set</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">elements</span> <span class="p">[]</span><span class="kt">string</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">set</span><span class="p">)</span> <span class="nf">Add</span><span class="p">(</span><span class="nx">element</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">s</span><span class="p">.</span><span class="nx">elements</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">elements</span><span class="p">,</span> <span class="nx">element</span><span class="p">)</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">pageProcessor</span> <span class="kd">interface</span> <span class="p">{</span>
+    <span class="nf">Process</span><span class="p">(</span><span class="nx">item</span> <span class="nx">any</span><span class="p">)</span> <span class="kt">error</span>
+    <span class="nf">Start</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span>
+    <span class="nf">Wait</span><span class="p">()</span> <span class="kt">error</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">newPagesProcessor</span><span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">set</span><span class="p">)</span> <span class="o">*</span><span class="nx">pagesProcessor</span> <span class="p">{</span>
+    <span class="nx">ps</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">pageProcessor</span><span class="p">)</span>
+    <span class="nx">ps</span><span class="p">[</span><span class="s">&#34;i&#34;</span><span class="p">]</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">intProcessor</span><span class="p">{</span><span class="nx">processor</span><span class="p">{</span>
+        <span class="nx">s</span><span class="p">:</span>        <span class="nx">s</span><span class="p">,</span>
+        <span class="nx">itemChan</span><span class="p">:</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kd">interface</span><span class="p">{},</span> <span class="mi">2</span><span class="p">),</span>
+    <span class="p">}}</span>
+    <span class="nx">ps</span><span class="p">[</span><span class="s">&#34;s&#34;</span><span class="p">]</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">stringProcessor</span><span class="p">{</span><span class="nx">processor</span><span class="p">{</span>
+        <span class="nx">s</span><span class="p">:</span>        <span class="nx">s</span><span class="p">,</span>
+        <span class="nx">itemChan</span><span class="p">:</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kd">interface</span><span class="p">{},</span> <span class="mi">2</span><span class="p">),</span>
+    <span class="p">}}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="k">return</span> <span class="o">&amp;</span><span class="nx">pagesProcessor</span><span class="p">{</span><span class="nx">processors</span><span class="p">:</span> <span class="nx">ps</span><span class="p">}</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">pagesProcessor</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">processors</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">pageProcessor</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>Page bundles mapped to their language.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="o">*</span><span class="nx">pagesProcessor</span><span class="p">)</span> <span class="nf">Process</span><span class="p">(</span><span class="nx">item</span> <span class="nx">any</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+    <span class="k">switch</span> <span class="nx">v</span> <span class="o">:=</span> <span class="nx">item</span><span class="p">.(</span><span class="kd">type</span><span class="p">)</span> <span class="p">{</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="k">case</span> <span class="kt">int</span><span class="p">:</span>
+        <span class="nx">err</span> <span class="o">:=</span> <span class="nx">p</span><span class="p">.</span><span class="nx">processors</span><span class="p">[</span><span class="s">&#34;i&#34;</span><span class="p">].</span><span class="nf">Process</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nx">err</span>
+        <span class="p">}</span>
+    <span class="k">case</span> <span class="kt">string</span><span class="p">:</span>
+        <span class="nx">err</span> <span class="o">:=</span> <span class="nx">p</span><span class="p">.</span><span class="nx">processors</span><span class="p">[</span><span class="s">&#34;s&#34;</span><span class="p">].</span><span class="nf">Process</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nx">err</span>
+        <span class="p">}</span>
+    <span class="k">default</span><span class="p">:</span>
+        <span class="nb">panic</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span>
+            <span class="s">&#34;unrecognized item type in Process: %T&#34;</span><span class="p">,</span> <span class="nx">item</span><span class="p">))</span>
+    <span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="o">*</span><span class="nx">pagesProcessor</span><span class="p">)</span> <span class="nf">Start</span><span class="p">(</span>
+    <span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">proc</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">p</span><span class="p">.</span><span class="nx">processors</span> <span class="p">{</span>
+        <span class="nx">ctx</span> <span class="p">=</span> <span class="nx">proc</span><span class="p">.</span><span class="nf">Start</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">ctx</span>
+<span class="p">}</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="o">*</span><span class="nx">pagesProcessor</span><span class="p">)</span> <span class="nf">Wait</span><span class="p">()</span> <span class="kt">error</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">err</span> <span class="kt">error</span>
+    <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">proc</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">p</span><span class="p">.</span><span class="nx">processors</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="nx">e</span> <span class="o">:=</span> <span class="nx">proc</span><span class="p">.</span><span class="nf">Wait</span><span class="p">();</span> <span class="nx">e</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="nx">err</span> <span class="p">=</span> <span class="nx">e</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">err</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">processor</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">s</span>         <span class="o">*</span><span class="nx">set</span>
+    <span class="nx">ctx</span>       <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span>
+    <span class="nx">itemChan</span>  <span class="kd">chan</span> <span class="nx">any</span>
+    <span class="nx">itemGroup</span> <span class="o">*</span><span class="nx">errgroup</span><span class="p">.</span><span class="nx">Group</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="o">*</span><span class="nx">processor</span><span class="p">)</span> <span class="nf">Process</span><span class="p">(</span><span class="nx">item</span> <span class="nx">any</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+    <span class="k">select</span> <span class="p">{</span>
+    <span class="k">case</span> <span class="o">&lt;-</span><span class="nx">p</span><span class="p">.</span><span class="nx">ctx</span><span class="p">.</span><span class="nf">Done</span><span class="p">():</span>
+        <span class="k">return</span> <span class="kc">nil</span>
+    <span class="k">default</span><span class="p">:</span>
+        <span class="nx">p</span><span class="p">.</span><span class="nx">itemChan</span> <span class="o">&lt;-</span> <span class="nx">item</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="o">*</span><span class="nx">processor</span><span class="p">)</span> <span class="nf">Start</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span> <span class="p">{</span>
+    <span class="nx">p</span><span class="p">.</span><span class="nx">itemGroup</span><span class="p">,</span> <span class="nx">ctx</span> <span class="p">=</span> <span class="nx">errgroup</span><span class="p">.</span><span class="nf">WithContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+    <span class="nx">p</span><span class="p">.</span><span class="nx">ctx</span> <span class="p">=</span> <span class="nx">ctx</span>
+    <span class="k">return</span> <span class="nx">ctx</span>
+<span class="p">}</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="o">*</span><span class="nx">processor</span><span class="p">)</span> <span class="nf">Wait</span><span class="p">()</span> <span class="kt">error</span> <span class="p">{</span>
+    <span class="nb">close</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">itemChan</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nx">p</span><span class="p">.</span><span class="nx">itemGroup</span><span class="p">.</span><span class="nf">Wait</span><span class="p">()</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">intProcessor</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">processor</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">i</span> <span class="o">*</span><span class="nx">intProcessor</span><span class="p">)</span> <span class="nf">Start</span><span class="p">(</span>
+    <span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span> <span class="p">{</span>
+    <span class="nx">ctx</span> <span class="p">=</span> <span class="nx">i</span><span class="p">.</span><span class="nx">processor</span><span class="p">.</span><span class="nf">Start</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+    <span class="nx">i</span><span class="p">.</span><span class="nx">processor</span><span class="p">.</span><span class="nx">itemGroup</span><span class="p">.</span><span class="nf">Go</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="kt">error</span> <span class="p">{</span>
+        <span class="k">for</span> <span class="nx">item</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">i</span><span class="p">.</span><span class="nx">processor</span><span class="p">.</span><span class="nx">itemChan</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">i</span><span class="p">.</span><span class="nf">doProcess</span><span class="p">(</span><span class="nx">item</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="nx">err</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="kc">nil</span>
+    <span class="p">})</span>
+    <span class="k">return</span> <span class="nx">ctx</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">i</span> <span class="o">*</span><span class="nx">intProcessor</span><span class="p">)</span> <span class="nf">doProcess</span><span class="p">(</span><span class="nx">item</span> <span class="nx">any</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+    <span class="k">switch</span> <span class="nx">v</span> <span class="o">:=</span> <span class="nx">item</span><span class="p">.(</span><span class="kd">type</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">case</span> <span class="kt">int</span><span class="p">:</span>
+        <span class="nx">i</span><span class="p">.</span><span class="nx">processor</span><span class="p">.</span><span class="nx">s</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="nx">strconv</span><span class="p">.</span><span class="nf">Itoa</span><span class="p">(</span><span class="nx">v</span><span class="p">))</span>
+    <span class="k">default</span><span class="p">:</span>
+        <span class="nb">panic</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span>
+            <span class="s">&#34;unrecognized item type in intProcess: %T&#34;</span><span class="p">,</span> <span class="nx">item</span><span class="p">))</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">type</span> <span class="nx">stringProcessor</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">processor</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">i</span> <span class="o">*</span><span class="nx">stringProcessor</span><span class="p">)</span> <span class="nf">Start</span><span class="p">(</span>
+    <span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span> <span class="p">{</span>
+    <span class="nx">ctx</span> <span class="p">=</span> <span class="nx">i</span><span class="p">.</span><span class="nx">processor</span><span class="p">.</span><span class="nf">Start</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+    <span class="nx">i</span><span class="p">.</span><span class="nx">processor</span><span class="p">.</span><span class="nx">itemGroup</span><span class="p">.</span><span class="nf">Go</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="kt">error</span> <span class="p">{</span>
+        <span class="k">for</span> <span class="nx">item</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">i</span><span class="p">.</span><span class="nx">processor</span><span class="p">.</span><span class="nx">itemChan</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">i</span><span class="p">.</span><span class="nf">doProcess</span><span class="p">(</span><span class="nx">item</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="nx">err</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="kc">nil</span>
+    <span class="p">})</span>
+    <span class="k">return</span> <span class="nx">ctx</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">i</span> <span class="o">*</span><span class="nx">stringProcessor</span><span class="p">)</span> <span class="nf">doProcess</span><span class="p">(</span><span class="nx">item</span> <span class="nx">any</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+    <span class="k">switch</span> <span class="nx">v</span> <span class="o">:=</span> <span class="nx">item</span><span class="p">.(</span><span class="kd">type</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">case</span> <span class="kt">string</span><span class="p">:</span>
+        <span class="nx">i</span><span class="p">.</span><span class="nx">processor</span><span class="p">.</span><span class="nx">s</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span>
+    <span class="k">default</span><span class="p">:</span>
+        <span class="nb">panic</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span>
+            <span class="s">&#34;unrecognized item type in stringProcessor: %T&#34;</span><span class="p">,</span>
+            <span class="nx">item</span><span class="p">))</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+      </table>
+      
+      <table>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="go">&amp;{[1 hello 2 3 4 5 6 world happy]}</span></pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code">
+            
+          <pre class="chroma"><span class="go">Program exited.</span></pre>
+          </td>
+        </tr>
+        
+      </table>
+      
+      
+      <p class="next">
+        Next example: <a href="page-state">Page State</a>.
+      </p>
+      
+
+    <p class="footer">
+      by <a href="https://sunwei.xyz">孙伟</a>
+      | <a href="https://github.com/sunwei/gobyexample">source</a>
+      | <a href="https://github.com/sunwei/gobyexample#license">license</a>
+      | Inspired by <a href="https://github.com/mmcgrana/gobyexample">gobyexample.com</a>
+      | Build with LOVE 💞
+    </p>
+
+    </div>
+    <script>
+      var codeLines = [];
+      codeLines.push('package main\u000A');codeLines.push('import (\u000A    \"context\"\u000A    \"fmt\"\u000A    \"golang.org/x/sync/errgroup\"\u000A    \"strconv\"\u000A    \"time\"\u000A)\u000A');codeLines.push('func main() {\u000A    s :\u003D \u0026set{elements: []string{}}\u000A    p :\u003D newPagesProcessor(s)\u000A    p.Start(context.Background())\u000A    defer func() {\u000A        err :\u003D p.Wait()\u000A        if err !\u003D nil {\u000A            fmt.Println(err)\u000A        }\u000A    }()\u000A');codeLines.push('    data :\u003D []any{1, \"hello\", 2, 3, 4, 5, 6, \"world\", \"happy\"}\u000A    for _, d :\u003D range data {\u000A        err :\u003D p.Process(d)\u000A        time.Sleep(1 * time.Millisecond)\u000A        if err !\u003D nil {\u000A            fmt.Println(err)\u000A            return\u000A        }\u000A    }\u000A');codeLines.push('    fmt.Println(s)\u000A}\u000A');codeLines.push('type set struct {\u000A    elements []string\u000A}\u000A');codeLines.push('func (s *set) Add(element string) {\u000A    s.elements \u003D append(s.elements, element)\u000A}\u000A');codeLines.push('type pageProcessor interface {\u000A    Process(item any) error\u000A    Start(ctx context.Context) context.Context\u000A    Wait() error\u000A}\u000A');codeLines.push('func newPagesProcessor(s *set) *pagesProcessor {\u000A    ps :\u003D make(map[string]pageProcessor)\u000A    ps[\"i\"] \u003D \u0026intProcessor{processor{\u000A        s:        s,\u000A        itemChan: make(chan interface{}, 2),\u000A    }}\u000A    ps[\"s\"] \u003D \u0026stringProcessor{processor{\u000A        s:        s,\u000A        itemChan: make(chan interface{}, 2),\u000A    }}\u000A');codeLines.push('    return \u0026pagesProcessor{processors: ps}\u000A}\u000A');codeLines.push('type pagesProcessor struct {\u000A    processors map[string]pageProcessor\u000A}\u000A');codeLines.push('func (p *pagesProcessor) Process(item any) error {\u000A    switch v :\u003D item.(type) {\u000A');codeLines.push('    case int:\u000A        err :\u003D p.processors[\"i\"].Process(v)\u000A        if err !\u003D nil {\u000A            return err\u000A        }\u000A    case string:\u000A        err :\u003D p.processors[\"s\"].Process(v)\u000A        if err !\u003D nil {\u000A            return err\u000A        }\u000A    default:\u000A        panic(fmt.Sprintf(\u000A            \"unrecognized item type in Process: %T\", item))\u000A    }\u000A');codeLines.push('    return nil\u000A}\u000Afunc (p *pagesProcessor) Start(\u000A    ctx context.Context) context.Context {\u000A    for _, proc :\u003D range p.processors {\u000A        ctx \u003D proc.Start(ctx)\u000A    }\u000A    return ctx\u000A}\u000Afunc (p *pagesProcessor) Wait() error {\u000A    var err error\u000A    for _, proc :\u003D range p.processors {\u000A        if e :\u003D proc.Wait(); e !\u003D nil {\u000A            err \u003D e\u000A        }\u000A    }\u000A    return err\u000A}\u000A');codeLines.push('type processor struct {\u000A    s         *set\u000A    ctx       context.Context\u000A    itemChan  chan any\u000A    itemGroup *errgroup.Group\u000A}\u000A');codeLines.push('func (p *processor) Process(item any) error {\u000A    select {\u000A    case \u003C-p.ctx.Done():\u000A        return nil\u000A    default:\u000A        p.itemChan \u003C- item\u000A    }\u000A    return nil\u000A}\u000Afunc (p *processor) Start(ctx context.Context) context.Context {\u000A    p.itemGroup, ctx \u003D errgroup.WithContext(ctx)\u000A    p.ctx \u003D ctx\u000A    return ctx\u000A}\u000Afunc (p *processor) Wait() error {\u000A    close(p.itemChan)\u000A    return p.itemGroup.Wait()\u000A}\u000A');codeLines.push('type intProcessor struct {\u000A    processor\u000A}\u000A');codeLines.push('func (i *intProcessor) Start(\u000A    ctx context.Context) context.Context {\u000A    ctx \u003D i.processor.Start(ctx)\u000A    i.processor.itemGroup.Go(func() error {\u000A        for item :\u003D range i.processor.itemChan {\u000A            if err :\u003D i.doProcess(item); err !\u003D nil {\u000A                return err\u000A            }\u000A        }\u000A        return nil\u000A    })\u000A    return ctx\u000A}\u000A');codeLines.push('func (i *intProcessor) doProcess(item any) error {\u000A    switch v :\u003D item.(type) {\u000A    case int:\u000A        i.processor.s.Add(strconv.Itoa(v))\u000A    default:\u000A        panic(fmt.Sprintf(\u000A            \"unrecognized item type in intProcess: %T\", item))\u000A    }\u000A    return nil\u000A}\u000A');codeLines.push('type stringProcessor struct {\u000A    processor\u000A}\u000A');codeLines.push('func (i *stringProcessor) Start(\u000A    ctx context.Context) context.Context {\u000A    ctx \u003D i.processor.Start(ctx)\u000A    i.processor.itemGroup.Go(func() error {\u000A        for item :\u003D range i.processor.itemChan {\u000A            if err :\u003D i.doProcess(item); err !\u003D nil {\u000A                return err\u000A            }\u000A        }\u000A        return nil\u000A    })\u000A    return ctx\u000A}\u000A');codeLines.push('func (i *stringProcessor) doProcess(item any) error {\u000A    switch v :\u003D item.(type) {\u000A    case string:\u000A        i.processor.s.Add(v)\u000A    default:\u000A        panic(fmt.Sprintf(\u000A            \"unrecognized item type in stringProcessor: %T\",\u000A            item))\u000A    }\u000A    return nil\u000A}\u000A');codeLines.push('');codeLines.push('');
+    </script>
+    <script src="site.js" async></script>
+  </body>
+</html>
