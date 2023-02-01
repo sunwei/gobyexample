@@ -18,3 +18,4 @@ Template Executor
 Content Map
 Page Processor
 Page State
+Publisher
