@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>深入理解Hugo: Publisher</title>
+    <link rel=stylesheet href="site.css">
+  </head>
+  <script>
+      onkeydown = (e) => {
+          
+          if (e.key == "ArrowLeft") {
+              window.location.href = 'page-state';
+          }
+          
+          
+      }
+  </script>
+  <body>
+    <div class="example" id="publisher">
+      <h2><a href="./">深入理解Hugo</a>: Publisher</h2>
+      
+      <table>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="go">1. what to publish:  template executed transferred result
+</span><span class="go">2. where to publish:  /tmp/hugo2834984546</span></pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code">
+            
+          <pre class="chroma"><span class="go">Program exited.</span></pre>
+          </td>
+        </tr>
+        
+      </table>
+      
+      <table>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            <a href="https://go.dev/play/p/M3aFv9usSuF"><img title="Run code" src="play.png" class="run" /></a><img title="Copy code" src="clipboard.png" class="copy" />
+          <pre class="chroma"><span class="kn">package</span> <span class="nx">main</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kn">import</span> <span class="p">(</span>
+    <span class="s">&#34;bytes&#34;</span>
+    <span class="s">&#34;fmt&#34;</span>
+    <span class="s">&#34;io&#34;</span>
+    <span class="s">&#34;os&#34;</span>
+    <span class="s">&#34;path/filepath&#34;</span>
+<span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>publisher needs to know:
+1: what to publish
+2: where to publish</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>1
+src is template executed result
+it is the source that we need to publish
+take a look at template executor example
+<a href="https://c.sunwei.xyz/template-executor.html">https://c.sunwei.xyz/template-executor.html</a></p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+    <span class="nx">src</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">bytes</span><span class="p">.</span><span class="nx">Buffer</span><span class="p">{}</span>
+    <span class="nx">src</span><span class="p">.</span><span class="nf">Write</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="s">&#34;template executed result&#34;</span><span class="p">))</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">b</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">bytes</span><span class="p">.</span><span class="nx">Buffer</span><span class="p">{}</span>
+    <span class="nx">transformers</span> <span class="o">:=</span> <span class="nf">createTransformerChain</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">transformers</span><span class="p">.</span><span class="nf">Apply</span><span class="p">(</span><span class="nx">b</span><span class="p">,</span> <span class="nx">src</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">dir</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">os</span><span class="p">.</span><span class="nf">MkdirTemp</span><span class="p">(</span><span class="s">&#34;&#34;</span><span class="p">,</span> <span class="s">&#34;hugo&#34;</span><span class="p">)</span>
+    <span class="k">defer</span> <span class="nx">os</span><span class="p">.</span><span class="nf">RemoveAll</span><span class="p">(</span><span class="nx">dir</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>2
+targetPath is from pageState
+this is where we need to publish
+take a look at page state example
+<a href="https://c.sunwei.xyz/page-state.html">https://c.sunwei.xyz/page-state.html</a></p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+    <span class="nx">targetPath</span> <span class="o">:=</span> <span class="nx">filepath</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">dir</span><span class="p">,</span> <span class="s">&#34;index.html&#34;</span><span class="p">)</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">os</span><span class="p">.</span><span class="nf">WriteFile</span><span class="p">(</span>
+        <span class="nx">targetPath</span><span class="p">,</span>
+        <span class="nx">bytes</span><span class="p">.</span><span class="nf">TrimSuffix</span><span class="p">(</span><span class="nx">b</span><span class="p">.</span><span class="nf">Bytes</span><span class="p">(),</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="s">&#34;\n&#34;</span><span class="p">)),</span>
+        <span class="nx">os</span><span class="p">.</span><span class="nx">ModePerm</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+    <span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;1. what to publish: &#34;</span><span class="p">,</span> <span class="nb">string</span><span class="p">(</span><span class="nx">b</span><span class="p">.</span><span class="nf">Bytes</span><span class="p">()))</span>
+    <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;2. where to publish: &#34;</span><span class="p">,</span> <span class="nx">dir</span><span class="p">)</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Chain</span><span class="p">)</span> <span class="nf">Apply</span><span class="p">(</span><span class="nx">to</span> <span class="nx">io</span><span class="p">.</span><span class="nx">Writer</span><span class="p">,</span> <span class="nx">from</span> <span class="nx">io</span><span class="p">.</span><span class="nx">Reader</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+    <span class="nx">fb</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">bytes</span><span class="p">.</span><span class="nx">Buffer</span><span class="p">{}</span>
+    <span class="k">if</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">fb</span><span class="p">.</span><span class="nf">ReadFrom</span><span class="p">(</span><span class="nx">from</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">err</span>
+    <span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">tb</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">bytes</span><span class="p">.</span><span class="nx">Buffer</span><span class="p">{}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">ftb</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">fromToBuffer</span><span class="p">{</span><span class="nx">from</span><span class="p">:</span> <span class="nx">fb</span><span class="p">,</span> <span class="nx">to</span><span class="p">:</span> <span class="nx">tb</span><span class="p">}</span>
+    <span class="k">for</span> <span class="nx">i</span><span class="p">,</span> <span class="nx">tr</span> <span class="o">:=</span> <span class="k">range</span> <span class="o">*</span><span class="nx">c</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="nx">i</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
+            <span class="nb">panic</span><span class="p">(</span><span class="s">&#34;switch from/to and reset to&#34;</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">tr</span><span class="p">(</span><span class="nx">ftb</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="k">continue</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ftb</span><span class="p">.</span><span class="nx">to</span><span class="p">.</span><span class="nf">WriteTo</span><span class="p">(</span><span class="nx">to</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nx">err</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="nf">createTransformerChain</span><span class="p">()</span> <span class="nx">Chain</span> <span class="p">{</span>
+    <span class="nx">transformers</span> <span class="o">:=</span> <span class="nf">NewEmpty</span><span class="p">()</span>
+    <span class="nx">transformers</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">transformers</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">ft</span> <span class="nx">FromTo</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+        <span class="nx">content</span> <span class="o">:=</span> <span class="nx">ft</span><span class="p">.</span><span class="nf">From</span><span class="p">().</span><span class="nf">Bytes</span><span class="p">()</span>
+        <span class="nx">w</span> <span class="o">:=</span> <span class="nx">ft</span><span class="p">.</span><span class="nf">To</span><span class="p">()</span>
+        <span class="nx">tc</span> <span class="o">:=</span> <span class="nx">bytes</span><span class="p">.</span><span class="nf">Replace</span><span class="p">(</span>
+            <span class="nx">content</span><span class="p">,</span>
+            <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="s">&#34;result&#34;</span><span class="p">),</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="s">&#34;transferred result&#34;</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="nx">_</span><span class="p">,</span> <span class="nx">_</span> <span class="p">=</span> <span class="nx">w</span><span class="p">.</span><span class="nf">Write</span><span class="p">(</span><span class="nx">tc</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">nil</span>
+    <span class="p">})</span>
+    <span class="k">return</span> <span class="nx">transformers</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>Chain is an ordered processing chain. The next transform operation will
+receive the output from the previous.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">type</span> <span class="nx">Chain</span> <span class="p">[]</span><span class="nx">Transformer</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>Transformer is the func that needs to be implemented by a transformation step.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">type</span> <span class="nx">Transformer</span> <span class="kd">func</span><span class="p">(</span><span class="nx">ft</span> <span class="nx">FromTo</span><span class="p">)</span> <span class="kt">error</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>FromTo is sent to each transformation step in the chain.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">type</span> <span class="nx">FromTo</span> <span class="kd">interface</span> <span class="p">{</span>
+    <span class="nf">From</span><span class="p">()</span> <span class="nx">BytesReader</span>
+    <span class="nf">To</span><span class="p">()</span> <span class="nx">io</span><span class="p">.</span><span class="nx">Writer</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>BytesReader wraps the Bytes method, usually implemented by bytes.Buffer, and an
+io.Reader.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">type</span> <span class="nx">BytesReader</span> <span class="kd">interface</span> <span class="p">{</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>Bytes The slice given by Bytes is valid for use only until the next buffer modification.
+That is, if you want to use this value outside of the current transformer step,
+you need to take a copy.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+    <span class="nf">Bytes</span><span class="p">()</span> <span class="p">[]</span><span class="kt">byte</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">    <span class="nx">io</span><span class="p">.</span><span class="nx">Reader</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>NewEmpty creates a new slice of transformers with a capacity of 20.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">func</span> <span class="nf">NewEmpty</span><span class="p">()</span> <span class="nx">Chain</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nb">make</span><span class="p">(</span><span class="nx">Chain</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            <p>Implements contentTransformer
+Content is read from the from-buffer and rewritten to to the to-buffer.</p>
+
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma">
+<span class="kd">type</span> <span class="nx">fromToBuffer</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">from</span> <span class="o">*</span><span class="nx">bytes</span><span class="p">.</span><span class="nx">Buffer</span>
+    <span class="nx">to</span>   <span class="o">*</span><span class="nx">bytes</span><span class="p">.</span><span class="nx">Buffer</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code leading">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">ft</span> <span class="nx">fromToBuffer</span><span class="p">)</span> <span class="nf">From</span><span class="p">()</span> <span class="nx">BytesReader</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">ft</span><span class="p">.</span><span class="nx">from</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="docs">
+            
+          </td>
+          <td class="code">
+            
+          <pre class="chroma"><span class="kd">func</span> <span class="p">(</span><span class="nx">ft</span> <span class="nx">fromToBuffer</span><span class="p">)</span> <span class="nf">To</span><span class="p">()</span> <span class="nx">io</span><span class="p">.</span><span class="nx">Writer</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">ft</span><span class="p">.</span><span class="nx">to</span>
+<span class="p">}</span>
+</pre>
+          </td>
+        </tr>
+        
+      </table>
+      
+      
+
+    <p class="footer">
+      by <a href="https://sunwei.xyz">孙伟</a>
+      | <a href="https://github.com/sunwei/gobyexample">source</a>
+      | <a href="https://github.com/sunwei/gobyexample#license">license</a>
+      | Inspired by <a href="https://github.com/mmcgrana/gobyexample">gobyexample.com</a>
+      | Build with LOVE 💞
+    </p>
+
+    </div>
+    <script>
+      var codeLines = [];
+      codeLines.push('');codeLines.push('');codeLines.push('package main\u000A');codeLines.push('import (\u000A    \"bytes\"\u000A    \"fmt\"\u000A    \"io\"\u000A    \"os\"\u000A    \"path/filepath\"\u000A)\u000A');codeLines.push('func main() {\u000A');codeLines.push('    src :\u003D \u0026bytes.Buffer{}\u000A    src.Write([]byte(\"template executed result\"))\u000A');codeLines.push('    b :\u003D \u0026bytes.Buffer{}\u000A    transformers :\u003D createTransformerChain()\u000A    if err :\u003D transformers.Apply(b, src); err !\u003D nil {\u000A        fmt.Println(err)\u000A        return\u000A    }\u000A');codeLines.push('    dir, _ :\u003D os.MkdirTemp(\"\", \"hugo\")\u000A    defer os.RemoveAll(dir)\u000A');codeLines.push('    targetPath :\u003D filepath.Join(dir, \"index.html\")\u000A');codeLines.push('    if err :\u003D os.WriteFile(\u000A        targetPath,\u000A        bytes.TrimSuffix(b.Bytes(), []byte(\"\\n\")),\u000A        os.ModePerm); err !\u003D nil {\u000A        panic(err)\u000A    }\u000A');codeLines.push('    fmt.Println(\"1. what to publish: \", string(b.Bytes()))\u000A    fmt.Println(\"2. where to publish: \", dir)\u000A}\u000A');codeLines.push('func (c *Chain) Apply(to io.Writer, from io.Reader) error {\u000A    fb :\u003D \u0026bytes.Buffer{}\u000A    if _, err :\u003D fb.ReadFrom(from); err !\u003D nil {\u000A        return err\u000A    }\u000A');codeLines.push('    tb :\u003D \u0026bytes.Buffer{}\u000A');codeLines.push('    ftb :\u003D \u0026fromToBuffer{from: fb, to: tb}\u000A    for i, tr :\u003D range *c {\u000A        if i \u003E 0 {\u000A            panic(\"switch from/to and reset to\")\u000A        }\u000A        if err :\u003D tr(ftb); err !\u003D nil {\u000A            continue\u000A        }\u000A    }\u000A    _, err :\u003D ftb.to.WriteTo(to)\u000A    return err\u000A}\u000A');codeLines.push('func createTransformerChain() Chain {\u000A    transformers :\u003D NewEmpty()\u000A    transformers \u003D append(transformers, func(ft FromTo) error {\u000A        content :\u003D ft.From().Bytes()\u000A        w :\u003D ft.To()\u000A        tc :\u003D bytes.Replace(\u000A            content,\u000A            []byte(\"result\"), []byte(\"transferred result\"), 1)\u000A        _, _ \u003D w.Write(tc)\u000A        return nil\u000A    })\u000A    return transformers\u000A}\u000A');codeLines.push('type Chain []Transformer\u000A');codeLines.push('type Transformer func(ft FromTo) error\u000A');codeLines.push('type FromTo interface {\u000A    From() BytesReader\u000A    To() io.Writer\u000A}\u000A');codeLines.push('type BytesReader interface {\u000A');codeLines.push('    Bytes() []byte\u000A');codeLines.push('    io.Reader\u000A}\u000A');codeLines.push('func NewEmpty() Chain {\u000A    return make(Chain, 0, 2)\u000A}\u000A');codeLines.push('type fromToBuffer struct {\u000A    from *bytes.Buffer\u000A    to   *bytes.Buffer\u000A}\u000A');codeLines.push('func (ft fromToBuffer) From() BytesReader {\u000A    return ft.from\u000A}\u000A');codeLines.push('func (ft fromToBuffer) To() io.Writer {\u000A    return ft.to\u000A}\u000A');
+    </script>
+    <script src="site.js" async></script>
+  </body>
+</html>
