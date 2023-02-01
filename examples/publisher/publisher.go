@@ -8,11 +8,10 @@ import (
 	"path/filepath"
 )
 
+// publisher needs to know:
+// 1: what to publish
+// 2: where to publish
 func main() {
-	// publisher needs to know:
-	// 1: what to publish
-	// 2: where to publish
-
 	// 1
 	// src is template executed result
 	// it is the source that we need to publish
